@@ -6,6 +6,8 @@ This repository contains a multi-service application built using Docker Compose.
 - **AI Agents**: A Flask API service that handles task execution. See [`ai_agents/app.py`](c:\src\agent-container-sandbox\agent-management-system\ai_agents\app.py) and [`ai_agents/agent_manager.py`](c:\src\agent-container-sandbox\agent-management-system\ai_agents\agent_manager.py).
 - **Frontend**: A Vue 3 application built with Vite that interacts with the backend API. See [`frontend/src/App.vue`](c:\src\agent-container-sandbox\agent-management-system\frontend\src\App.vue) and [`frontend/src/config/backend_conf.ts`](c:\src\agent-container-sandbox\agent-management-system\frontend\src\config\backend_conf.ts).
 
+![Example](example.png)
+
 ## Project Structure
 
 ```

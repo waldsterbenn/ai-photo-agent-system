@@ -1,5 +1,6 @@
 from agent_manager import AgentManager
 from flask import Flask, request, jsonify
+from datastructures.image_carrier import ImageCarrier
 
 app = Flask(__name__)
 manager = AgentManager()
@@ -16,17 +17,24 @@ def index():
 @app.route('/task', methods=['POST'])
 def submit_task():
     data = request.get_json()
-    task = data.get('task')
-    if not task:
-        return jsonify({'error': 'No task provided'}), 400
 
-    result = manager.execute_task(task)
+    # Convert JSON array to a list of ImageCarrier objects
+    image_carriers = [ImageCarrier(**item) for item in data]
+
+    plan = manager.plan_task(
+        f"Plan how to analyse {len(image_carriers)} images. You have image agents to at your disposal.")
+    result = manager.execute_task(plan, image_carriers)
     return jsonify({'status': 'success', 'result': result})
 
 
 @app.route('/status', methods=['GET'])
 def get_status():
-    return jsonify({'status': 'running'})
+    return jsonify({'status': 'success', 'result': "OK"})
+
+    # result = manager.execute_task(
+    #     "What is the status of the system? What time is it?").json()
+
+    # return jsonify(result)
 
 
 if __name__ == '__main__':

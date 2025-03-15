@@ -8,11 +8,11 @@ CORS(app)  # enable CORS for all routes
 agent_manager_url = "http://ai_agents:6000"
 
 
-def submit_task(task):
+def submit_task(jsonData):
     """Submit a task to the agent server."""
     try:
         response = requests.post(
-            f"{agent_manager_url}/task", json={"task": task})
+            f"{agent_manager_url}/task", json=jsonData)
         response.raise_for_status()
         return response.json()
     except requests.exceptions.RequestException as e:
@@ -34,12 +34,12 @@ def status():
 @app.route('/processtask', methods=['POST'])
 def process_task():
     data = request.get_json()
-    task = data.get('task')
-    if not task:
-        return jsonify({'error': 'No task provided'}), 400
+    # task = data.get('task')
+    # if not task:
+    #     return jsonify({'error': 'No task provided'}), 400
 
-    result = submit_task(task)
-    return jsonify({'status': 'success', 'result': result})
+    result = submit_task(data)
+    return jsonify({'taskId': '1', 'result': result})
 
 
 if __name__ == '__main__':
