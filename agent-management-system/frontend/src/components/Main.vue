@@ -27,7 +27,7 @@
 
             <!-- Button to trigger image picker -->
             <button @click="triggerImagePicker" class="btn btn-secondary me-2" title="Upload an image">
-                <i class="bi bi-image"></i> Image
+                <i class="bi bi-image"></i> Select Photos
             </button>
 
             <!-- Send Message Button -->
@@ -42,7 +42,15 @@
             <div v-if="images.length > 0" class="row">
                 <div class="col-md-4 mb-3" v-for="image in images" :key="image.filename">
                     <div class="card h-100 text-start">
-                        <img :src="getImageURL(image.base64)" class="card-img-top img-thumbnail" alt="Image">
+                        <div class="position-relative">
+                            <img :src="getImageURL(image.base64)" class="card-img-top img-thumbnail" alt="Image">
+                            <!-- Each image shows its own spinner if the system is loading -->
+                            <div v-if="loading" class="spinner-overlay">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
                         <div v-if="getDescription(image.filename)" class="card-body">
                             <div class="form-check form-switch">
                                 <input class="form-check-input" type="checkbox" role="switch" value=""
@@ -52,8 +60,6 @@
                                     Should be deleted
                                 </label>
                             </div>
-                            <!-- <checkbox @change="updateDeleteStatus(image.filename, $event.target.checked)" /> -->
-
                             <div class="accordion mt-3" :id="`accordionDetails-${image.filename}`">
                                 <div class="accordion-item">
                                     <h2 class="accordion-header" :id="`headingDetails-${image.filename}`">
@@ -61,22 +67,20 @@
                                             data-bs-toggle="collapse"
                                             :data-bs-target="`#collapseDetails-${image.filename}`" aria-expanded="false"
                                             :aria-controls="`collapseDetails-${image.filename}`">
-                                            Details
+                                            Quality {{ getDescription(image.filename)?.image_rank }}/10
                                         </button>
                                     </h2>
                                     <div :id="`collapseDetails-${image.filename}`" class="accordion-collapse collapse"
                                         :aria-labelledby="`headingDetails-${image.filename}`">
                                         <div class="accordion-body">
+
                                             <p class="card-text">
-                                                <strong>Image Rank:</strong> {{
-                                                    getDescription(image.filename)?.image_rank }}
+                                                <strong>The Photo:</strong>
+                                                {{ getDescription(image.filename)?.summary || '' }}
                                             </p>
                                             <p class="card-text">
                                                 <strong>Delete Reason:</strong> {{
                                                     getDescription(image.filename)?.delete_reason || '' }}
-                                            </p>
-                                            <p class="card-text">
-                                                {{ getDescription(image.filename)?.summary || '' }}
                                             </p>
                                             <p class="card-text">
                                                 <strong>Scene:</strong> {{
@@ -151,7 +155,7 @@ const criteria = ref(criteriaSingleImagePrompt);
 
 // Helper: get the description matching the image's filename.
 function getDescription(filename: string): any {
-    return imageDescriptions.value.find(desc => desc.filename === filename) || {};
+    return imageDescriptions.value.find(desc => desc.filename === filename);
 }
 
 function triggerImagePicker() {
@@ -162,12 +166,16 @@ function getImageURL(image: string): string {
     return image.startsWith('data:') ? image : `data:image/png;base64,${image}`;
 }
 
-async function resizeImageFile(file: File, maxWidth: number = 800): Promise<string> {
+async function resizeImageFile(file: File, scaleFactor: number = 0): Promise<string> {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => {
             // Calculate scale factor to maintain aspect ratio.
-            const scale = Math.min(maxWidth / img.width, maxWidth / img.height);
+            let scale;
+            if (scaleFactor === 0)
+                scale = 1;
+            else
+                scale = Math.min(scaleFactor / img.width, scaleFactor / img.height);
             const width = img.width * scale;
             const height = img.height * scale;
 
@@ -201,7 +209,7 @@ async function handleImageUpload(event: Event) {
     if (!target.files || target.files.length === 0) return;
     for (const file of Array.from(target.files)) {
         try {
-            const dataUrl = await resizeImageFile(file, 1024);
+            const dataUrl = await resizeImageFile(file);
             const base64Data = dataUrl.split(',')[1]; // Remove base64 prefix
             images.value.push({ filename: "" + file.name, base64: base64Data });
         } catch (error) {
@@ -266,8 +274,20 @@ function updateDeleteStatus(filename: string, value: boolean) {
 </script>
 
 <style scoped>
-h1 {
-    font-size: 24px;
-    margin-bottom: 20px;
+.position-relative {
+    position: relative;
+}
+
+.spinner-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.7);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
 }
 </style>
