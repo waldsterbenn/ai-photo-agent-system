@@ -1,5 +1,24 @@
 <template>
     <div class="container-fluid d-flex flex-column h-100">
+        <div class="accordion mt-3">
+            <div class="accordion-item">
+                <h2 class="accordion-header" :id="`analysisDetailsHeading`">
+                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
+                        :data-bs-target="`#analysisDetails`" aria-expanded="false" :aria-controls="`analysisDetails`">
+                        Analysis information
+                    </button>
+                </h2>
+                <div :id="`analysisDetails`" class="accordion-collapse collapse"
+                    :aria-labelledby="`analysisDetailsHeading`">
+                    <div class="accordion-body">
+
+                        <h1>Image Analysis</h1>
+                        <p>{{ prompt }}</p>
+                        <p>{{ criteria }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
         <!-- Toolbar -->
         <div class="toolbar d-flex p-2 bg-light">
             <!-- Hidden File Input -->
@@ -14,43 +33,88 @@
             <!-- Send Message Button -->
             <button @click="sendMessage" class="btn btn-primary">Go</button>
         </div>
-        <div class="d-flex flex-column">
-            <h1>Image Analysis</h1>
-            <p>{{ prompt }}</p>
-            <p>{{ criteria }}</p>
-        </div>
+
         <!-- Content area -->
         <div class="content flex-grow-1 p-2">
-            <!-- <p>Backend URL: {{ statusUrl }}</p> -->
-            <div v-if="images.length > 0" class="d-flex flex-column">
-                <img v-for="(image, i) in images" :key="i" :src="getImageURL(image.base64)" class="img-thumbnail mt-2"
-                    style="max-width: 80%; max-height: auto;" />
-
-                <div v-for="(status, i) in imageDescriptions" :key="i" class="card mt-2">
-                    <div class="card-body">
-                        <h5 class="card-title">Image {{ i + 1 }}</h5>
-                        <p class="card-text">{{ status.summary }}</p>
-                        <p class="card-text">Scene: {{ status.scene }}</p>
-                        <p class="card-text">Setting: {{ status.setting }}</p>
-                        <p class="card-text">Text Content: {{ status.text_content }}</p>
-                        <ul class="list-group
-                            list-group-flush">
-                            <li v-for="(object, j) in status.objects" :key="j" class="list-group-item">
-                                <strong>{{ object.name }}</strong> - {{ object.attributes }}
-                            </li>
-                        </ul>
-                        <p class="card-text">Delete: {{ status.delete }}</p>
-                        <p class="card-text">Delete Reason: {{ status.delete_reason }}</p>
-                        <p class="card-text">Image Rank: {{ status.image_rank }}</p>
-
-                    </div>
-                </div>
-            </div>
-
             <p v-if="loading">Working...</p>
             <p v-else-if="error">{{ error }}</p>
 
+            <div v-if="images.length > 0" class="row">
+                <div class="col-md-4 mb-3" v-for="image in images" :key="image.filename">
+                    <div class="card h-100 text-start">
+                        <img :src="getImageURL(image.base64)" class="card-img-top img-thumbnail" alt="Image">
+                        <div v-if="getDescription(image.filename)" class="card-body">
+                            <div class="form-check form-switch">
+                                <input class="form-check-input" type="checkbox" role="switch" value=""
+                                    :id="`flexCheckDefault-${image.filename}`"
+                                    :checked="getDescription(image.filename)?.delete">
+                                <label class="form-check-label" :for="`flexCheckDefault-${image.filename}`">
+                                    Should be deleted
+                                </label>
+                            </div>
+                            <!-- <checkbox @change="updateDeleteStatus(image.filename, $event.target.checked)" /> -->
 
+                            <div class="accordion mt-3" :id="`accordionDetails-${image.filename}`">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" :id="`headingDetails-${image.filename}`">
+                                        <button class="accordion-button collapsed" type="button"
+                                            data-bs-toggle="collapse"
+                                            :data-bs-target="`#collapseDetails-${image.filename}`" aria-expanded="false"
+                                            :aria-controls="`collapseDetails-${image.filename}`">
+                                            Details
+                                        </button>
+                                    </h2>
+                                    <div :id="`collapseDetails-${image.filename}`" class="accordion-collapse collapse"
+                                        :aria-labelledby="`headingDetails-${image.filename}`">
+                                        <div class="accordion-body">
+                                            <p class="card-text">
+                                                <strong>Image Rank:</strong> {{
+                                                    getDescription(image.filename)?.image_rank }}
+                                            </p>
+                                            <p class="card-text">
+                                                <strong>Delete Reason:</strong> {{
+                                                    getDescription(image.filename)?.delete_reason || '' }}
+                                            </p>
+                                            <p class="card-text">
+                                                {{ getDescription(image.filename)?.summary || '' }}
+                                            </p>
+                                            <p class="card-text">
+                                                <strong>Scene:</strong> {{
+                                                    getDescription(image.filename)?.scene || ''
+                                                }}
+                                            </p>
+                                            <p class="card-text">
+                                                <strong>Setting:</strong> {{
+                                                    getDescription(image.filename)?.setting ||
+                                                    '' }}
+                                            </p>
+                                            <p class="card-text">
+                                                <strong>Text Content:</strong> {{
+                                                    getDescription(image.filename)?.text_content || '' }}
+                                            </p>
+                                            <div v-if="getDescription(image.filename)?.objects?.length">
+                                                <strong>Objects:</strong>
+                                                <div>
+                                                    <ul v-for="object in getDescription(image.filename).objects"
+                                                        :key="object.name" class="list-group">
+                                                        <li class="list-group-item d-flex align-items-start">
+                                                            <div class="ms-2 me-auto">
+                                                                <div class="fw-italic">{{ object.name }}
+                                                                </div>
+                                                                {{ object.attributes }}
+                                                            </div>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 </template>
@@ -62,16 +126,15 @@ import { backendUrl } from '../config/backend_conf';
 
 const statusUrl = computed(() => `${backendUrl}/status`);
 const processUrl = computed(() => `${backendUrl}/processtask`);
-const imageDescriptions = ref<ImageDescription[]>();
+const imageDescriptions = ref<any[]>([]); // Ensure descriptions include a "filename" property if available.
 const loading = ref(false);
 const error = ref('');
 const imageInput = ref<HTMLInputElement | null>(null);
-const images = ref<[{}]>([]);
+const images = ref<Array<{ filename: string; base64: string }>>([]);
 const taskPrompt = "Analyze the image and return a detailed JSON description including objects, scene, colors and any text detected. If you cannot determine certain details, leave those fields empty.";
 const prompt = ref(taskPrompt);
 const criteriaSingleImagePrompt = [
     "Rank the image and mark it to be deleted, if the image is raked below 5 or it meets any of the following criteria",
-    //"Duplicated motif or scene.",
     "Low quality image.",
     "Obscured or unclear motifs.",
     "Poor lighting or exposure.",
@@ -85,38 +148,18 @@ const criteriaSingleImagePrompt = [
     "Overexposed or underexposed.",
 ];
 const criteria = ref(criteriaSingleImagePrompt);
-const sendMessage = async (e: Event) => {
-    loading.value = true;
-    const fake = {
 
-        "result": "[{\"summary\": \"The image depicts two men standing near a stone wall with a blurred background of mountains and trees. The image quality is poor due to low resolution, blur, and potentially poor lighting.\", \"scene\": \"Outdoor, possibly a park or natural area with a stone wall.\", \"setting\": \"Landscape\", \"text_content\": \"\", \"objects\": [{\"name\": \"Man\", \"confidence\": 0.95, \"attributes\": \"Wearing a blue shirt, standing near a wall\"}, {\"name\": \"Man\", \"confidence\": 0.9, \"attributes\": \"Wearing a white shirt, standing near a wall\"}, {\"name\": \"Wall\", \"confidence\": 0.98, \"attributes\": \"Stone, appears old and weathered\"}, {\"name\": \"Tree\", \"confidence\": 0.75, \"attributes\": \"Green foliage, blurred\"}, {\"name\": \"Mountain\", \"confidence\": 0.6, \"attributes\": \"Blurred, distant\"}], \"delete\": false, \"delete_reason\": \"\", \"image_rank\": 3}, {\"summary\": \"The image appears to be a poorly composed shot of a stone wall with a blurred green background, likely a forest or foliage.\", \"scene\": \"Exterior, possibly a forest or wooded area.\", \"setting\": \"Outdoor\", \"text_content\": \"\", \"objects\": [{\"name\": \"Stone Wall\", \"confidence\": 0.95, \"attributes\": \"Rough, textured, gray, weathered\"}, {\"name\": \"Vegetation\", \"confidence\": 0.85, \"attributes\": \"Green, dense, blurred\"}, {\"name\": \"Background\", \"confidence\": 0.75, \"attributes\": \"Blurred, green\"}], \"delete\": true, \"delete_reason\": \"Low quality image. Obsured or unclear motifs. Poor composition or framing. Poor focus or sharpness. Poor lighting or exposure.\", \"image_rank\": 2}, {\"summary\": \"The image depicts two men standing near a stone wall with a blurred background of mountains and trees. The image quality is poor due to low resolution, blur, and potentially poor lighting.\", \"scene\": \"Outdoor, possibly a park or natural area with a stone wall.\", \"setting\": \"Landscape\", \"text_content\": \"\", \"objects\": [{\"name\": \"Man\", \"confidence\": 0.95, \"attributes\": \"Wearing a blue shirt, standing near a wall\"}, {\"name\": \"Man\", \"confidence\": 0.9, \"attributes\": \"Wearing a white shirt, standing near a wall\"}, {\"name\": \"Wall\", \"confidence\": 0.98, \"attributes\": \"Stone, appears old and weathered\"}, {\"name\": \"Tree\", \"confidence\": 0.75, \"attributes\": \"Green foliage, blurred\"}, {\"name\": \"Mountain\", \"confidence\": 0.6, \"attributes\": \"Blurred, distant\"}], \"delete\": false, \"delete_reason\": \"\", \"image_rank\": 3}, {\"summary\": \"The image appears to be a poorly composed shot of a stone wall with a blurred green background, likely a forest or foliage.\", \"scene\": \"Exterior, possibly a forest or wooded area.\", \"setting\": \"Outdoor\", \"text_content\": \"\", \"objects\": [{\"name\": \"Stone Wall\", \"confidence\": 0.95, \"attributes\": \"Rough, textured, gray, weathered\"}, {\"name\": \"Vegetation\", \"confidence\": 0.85, \"attributes\": \"Green, dense, blurred\"}, {\"name\": \"Background\", \"confidence\": 0.75, \"attributes\": \"Blurred, green\"}], \"delete\": true, \"delete_reason\": \"Low quality image. Obsured or unclear motifs. Poor composition or framing. Poor focus or sharpness. Poor lighting or exposure.\", \"image_rank\": 2}]",
-        "status": "success",
-        "taskId": 1742144313254
-    };
-    console.log(fake.result);
-    const newLocal: ImageDescription[] = JSON.parse(fake.result);
-    imageDescriptions.value = newLocal;
-    return;
-    try {
-
-        const payload = { taskId: Date.now(), taskPrompt: taskPrompt, criteria: criteriaSingleImagePrompt, images: images.value };
-        const response = await axios.post(processUrl.value, payload);
-        imageDescriptions.value = JSON.parse(response.data) as ImageDescription[];
-        //status.value = JSON.stringify();
-    } catch (err) {
-        error.value = (err as Error).message;
-    } finally {
-        loading.value = false;
-    }
-};
+// Helper: get the description matching the image's filename.
+function getDescription(filename: string): any {
+    return imageDescriptions.value.find(desc => desc.filename === filename) || {};
+}
 
 function triggerImagePicker() {
     imageInput.value?.click();
 }
 
 function getImageURL(image: string): string {
-    if (image.startsWith('data:')) return image;
-    return `data:image/png;base64,${image}`;
+    return image.startsWith('data:') ? image : `data:image/png;base64,${image}`;
 }
 
 async function resizeImageFile(file: File, maxWidth: number = 800): Promise<string> {
@@ -168,6 +211,38 @@ async function handleImageUpload(event: Event) {
     }
     target.value = "";
 }
+
+const sendMessage = async (e: Event) => {
+    loading.value = true;
+    error.value = "";
+    // const fake = {
+
+    //     "result": "[{\"summary\": \"The image depicts two men standing near a stone wall with a blurred background of mountains and trees. The image quality is poor due to low resolution, blur, and potentially poor lighting.\", \"scene\": \"Outdoor, possibly a park or natural area with a stone wall.\", \"setting\": \"Landscape\", \"text_content\": \"\", \"objects\": [{\"name\": \"Man\", \"confidence\": 0.95, \"attributes\": \"Wearing a blue shirt, standing near a wall\"}, {\"name\": \"Man\", \"confidence\": 0.9, \"attributes\": \"Wearing a white shirt, standing near a wall\"}, {\"name\": \"Wall\", \"confidence\": 0.98, \"attributes\": \"Stone, appears old and weathered\"}, {\"name\": \"Tree\", \"confidence\": 0.75, \"attributes\": \"Green foliage, blurred\"}, {\"name\": \"Mountain\", \"confidence\": 0.6, \"attributes\": \"Blurred, distant\"}], \"delete\": false, \"delete_reason\": \"\", \"image_rank\": 3}, {\"summary\": \"The image appears to be a poorly composed shot of a stone wall with a blurred green background, likely a forest or foliage.\", \"scene\": \"Exterior, possibly a forest or wooded area.\", \"setting\": \"Outdoor\", \"text_content\": \"\", \"objects\": [{\"name\": \"Stone Wall\", \"confidence\": 0.95, \"attributes\": \"Rough, textured, gray, weathered\"}, {\"name\": \"Vegetation\", \"confidence\": 0.85, \"attributes\": \"Green, dense, blurred\"}, {\"name\": \"Background\", \"confidence\": 0.75, \"attributes\": \"Blurred, green\"}], \"delete\": true, \"delete_reason\": \"Low quality image. Obsured or unclear motifs. Poor composition or framing. Poor focus or sharpness. Poor lighting or exposure.\", \"image_rank\": 2}, {\"summary\": \"The image depicts two men standing near a stone wall with a blurred background of mountains and trees. The image quality is poor due to low resolution, blur, and potentially poor lighting.\", \"scene\": \"Outdoor, possibly a park or natural area with a stone wall.\", \"setting\": \"Landscape\", \"text_content\": \"\", \"objects\": [{\"name\": \"Man\", \"confidence\": 0.95, \"attributes\": \"Wearing a blue shirt, standing near a wall\"}, {\"name\": \"Man\", \"confidence\": 0.9, \"attributes\": \"Wearing a white shirt, standing near a wall\"}, {\"name\": \"Wall\", \"confidence\": 0.98, \"attributes\": \"Stone, appears old and weathered\"}, {\"name\": \"Tree\", \"confidence\": 0.75, \"attributes\": \"Green foliage, blurred\"}, {\"name\": \"Mountain\", \"confidence\": 0.6, \"attributes\": \"Blurred, distant\"}], \"delete\": false, \"delete_reason\": \"\", \"image_rank\": 3}, {\"summary\": \"The image appears to be a poorly composed shot of a stone wall with a blurred green background, likely a forest or foliage.\", \"scene\": \"Exterior, possibly a forest or wooded area.\", \"setting\": \"Outdoor\", \"text_content\": \"\", \"objects\": [{\"name\": \"Stone Wall\", \"confidence\": 0.95, \"attributes\": \"Rough, textured, gray, weathered\"}, {\"name\": \"Vegetation\", \"confidence\": 0.85, \"attributes\": \"Green, dense, blurred\"}, {\"name\": \"Background\", \"confidence\": 0.75, \"attributes\": \"Blurred, green\"}], \"delete\": true, \"delete_reason\": \"Low quality image. Obsured or unclear motifs. Poor composition or framing. Poor focus or sharpness. Poor lighting or exposure.\", \"image_rank\": 2, \"filename\": \"DSC00067.JPG\"}]",
+    //     "status": "success",
+    //     "taskId": 1742144313254
+    // };
+    // console.log(fake.result);
+    // const newLocal: any[] = JSON.parse(fake.result);
+    // imageDescriptions.value = newLocal;
+    // return;
+    try {
+
+        const id = Date.now();
+        const payload = { taskId: id, taskPrompt: taskPrompt, criteria: criteriaSingleImagePrompt, images: images.value };
+        const response = await axios.post(processUrl.value, payload);
+        const data = response.data;
+        if (data.status === "success" && id === data.taskId) {
+            imageDescriptions.value = JSON.parse(data.result);
+        } else {
+            error.value = data.error;
+        }
+    } catch (err) {
+        error.value = (err as Error).stack ? (err as Error).message : JSON.stringify(err);
+    } finally {
+        loading.value = false;
+    }
+};
+
 const fetchStatus = async () => {
     try {
         const response = await axios.get(statusUrl.value);
@@ -182,6 +257,12 @@ const fetchStatus = async () => {
 // onMounted(() => {
 //     fetchStatus();
 // });
+function updateDeleteStatus(filename: string, value: boolean) {
+    const description = getDescription(filename);
+    if (description) {
+        description.delete = value;
+    }
+}
 </script>
 
 <style scoped>

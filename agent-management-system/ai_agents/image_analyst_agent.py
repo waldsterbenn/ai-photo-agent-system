@@ -34,4 +34,6 @@ class ImageAnalystAgent():
         print(response)
         image_analysis = ImageDescription.model_validate_json(
             response.message.content)
+        if image_analysis.filename != self.imageData.filename:
+            image_analysis.filename = self.imageData.filename
         return image_analysis

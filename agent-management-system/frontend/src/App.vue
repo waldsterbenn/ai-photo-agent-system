@@ -2,7 +2,7 @@
     <div id="app" class="container">
         <nav class="navbar navbar-expand bg-light mb-2">
             <div class="container-fluid">
-                <a class="navbar-brand" href="#">Vue App</a>
+                <a class="navbar-brand" href="#">Photo album cleaner</a>
                 <div class="collapse navbar-collapse">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                         <li class="nav-item">

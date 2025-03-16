@@ -5,9 +5,9 @@ from datastructures.image_detected_object import ImageDetectedObject
 
 
 class ImageDescription(BaseModel):
+    filename: str
     summary: str
     scene: str
-    # colors: list[str]
     setting: Literal['Indoor', 'Outdoor', 'Portrait', 'Landscape', 'Other']
     text_content: str
     objects: list[ImageDetectedObject]

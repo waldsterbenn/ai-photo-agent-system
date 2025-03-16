@@ -10,13 +10,11 @@ agent_manager_url = "http://ai_agents:6000"
 
 def submit_task(jsonData):
     """Submit a task to the agent server."""
-    try:
-        response = requests.post(
-            f"{agent_manager_url}/task", json=jsonData)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        return {"error": str(e)}
+
+    response = requests.post(
+        f"{agent_manager_url}/task", json=jsonData)
+    # response.raise_for_status()
+    return response.json()
 
 
 @app.route('/api', methods=['GET'])
@@ -27,7 +25,7 @@ def home():
 @app.route('/status', methods=['GET'])
 def status():
     response = requests.get(f"{agent_manager_url}/status")
-    response.raise_for_status()
+    # response.raise_for_status()
     return response.json()
 
 
