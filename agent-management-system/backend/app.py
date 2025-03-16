@@ -34,12 +34,12 @@ def status():
 @app.route('/processtask', methods=['POST'])
 def process_task():
     data = request.get_json()
-    # task = data.get('task')
-    # if not task:
-    #     return jsonify({'error': 'No task provided'}), 400
+    taskId = data.get('taskId')
+    if not taskId:
+        return jsonify({'error': 'No task provided'}), 400
 
     result = submit_task(data)
-    return jsonify({'taskId': '1', 'result': result})
+    return jsonify({'taskId': taskId, 'status': 'success', 'result': result})
 
 
 if __name__ == '__main__':

@@ -13,4 +13,4 @@ class ImageDescription(BaseModel):
     objects: list[ImageDetectedObject]
     delete: bool
     delete_reason: str
-    image_rank: Literal['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']
+    image_rank: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]

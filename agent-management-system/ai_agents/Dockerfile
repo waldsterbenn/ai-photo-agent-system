@@ -1,4 +1,4 @@
-FROM python:3.9-slim
+FROM python:3.11-slim
 
 WORKDIR /app
 
@@ -8,4 +8,6 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-CMD ["python", "app.py"]
+EXPOSE 5678 6000
+
+CMD ["python", "-m", "debugpy", "--wait-for-client","--listen","0.0.0.0:5678", "app.py"]

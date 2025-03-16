@@ -1,16 +1,25 @@
 import json
+from typing import List
 from ollama import Client, ResponseError, ChatResponse, ListResponse
-from agent_image_describer import AgentImageDescriber
+from image_analyst_agent import ImageAnalystAgent
 from datastructures.image_description import ImageDescription
+from datastructures.image_carrier import ImageCarrier
+from datastructures.agent_instruction import AgentInstruction
+from pydantic import BaseModel
+
+
+class Plan(BaseModel):
+    plan: str
+    agentPrompts: list[AgentInstruction]
 
 
 class AgentManager:
     """Plans and manages tasks between multiple agents."""
 
-    def __init__(self):
-        self.model = "gemma3:4b"
+    def __init__(self, model: str):
+        self.model = model
         self.llm = {}
-        self.agents = [AgentImageDescriber()]
+        self.agents: list[ImageAnalystAgent] = []
         self.tools = {}
         self._initialize_system()
 
@@ -33,13 +42,52 @@ class AgentManager:
             if e.status_code == 404:
                 self.llm.pull(self.model)
 
-    def plan_task(self, task_description):
-        return {
-            "status": "success",
-            "message": "Task planned successfully"
-        }
+    def plan_task(self, taskPrompt: str, criteria: List[str], image_carriers: List[ImageCarrier]) -> Plan:
 
-    def execute_task(self, task_plan_description: str, images: list) -> list:
+        planPrompt = f"""
+            You are provided {len(image_carriers)} images.
+            Use the agents you have at your disposal.
+            Use the agents to analyse and rate the images one by one, based on the criteria.
+            Each agent should get 1 image to analyse and you need to make an instructional prompt for each agent so they know what to do.
+
+            Now create a plan to solve this task.
+            The plan should contain instructions for each agent, based on the prompt template.
+
+            ---
+
+            Prompt template:
+            {taskPrompt}
+
+            ---
+
+            Criteria:
+            {criteria}
+            
+            ---
+            
+            Image filenames:
+            {', '.join([carrier.filename for carrier in image_carriers])}
+            """
+
+        response: ChatResponse = self.llm.chat(model=self.model, messages=[
+            {
+                'role': 'user',
+                'content': planPrompt,
+            }],
+            format=Plan.model_json_schema(),
+            options={'temperature': 0})
+        # print(response)
+
+        plan = Plan.model_validate_json(response.message.content)
+        print(plan.plan)
+        for agentInstruction in plan.agentPrompts:
+            image = list(
+                filter(lambda x: (x.filename == agentInstruction.filename), image_carriers))[0]
+            self.agents.append(ImageAnalystAgent(
+                self.model, agentInstruction, image))
+        return plan
+
+    def execute_task(self, task_plan_description: str, task_prompt: str, images: list) -> list:
         """
         Execute a task using the multi-agent system.
 
@@ -49,11 +97,11 @@ class AgentManager:
         Returns:
             dict: Result of the task execution
         """
-
+        pass
         imageDescriptions = []
         # try:
-        for image in images:
-            desc = self.invokeAgent(image)
+        for agent in self.agents:
+            desc: ImageDescription = agent.execute()
             imageDescriptions.append(desc)
 
         dict_descriptions = [desc.dict() for desc in imageDescriptions]

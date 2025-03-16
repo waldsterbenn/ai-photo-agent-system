@@ -14,18 +14,43 @@
             <!-- Send Message Button -->
             <button @click="sendMessage" class="btn btn-primary">Go</button>
         </div>
-
+        <div class="d-flex flex-column">
+            <h1>Image Analysis</h1>
+            <p>{{ prompt }}</p>
+            <p>{{ criteria }}</p>
+        </div>
         <!-- Content area -->
         <div class="content flex-grow-1 p-2">
             <!-- <p>Backend URL: {{ statusUrl }}</p> -->
             <div v-if="images.length > 0" class="d-flex flex-column">
                 <img v-for="(image, i) in images" :key="i" :src="getImageURL(image.base64)" class="img-thumbnail mt-2"
                     style="max-width: 80%; max-height: auto;" />
+
+                <div v-for="(status, i) in imageDescriptions" :key="i" class="card mt-2">
+                    <div class="card-body">
+                        <h5 class="card-title">Image {{ i + 1 }}</h5>
+                        <p class="card-text">{{ status.summary }}</p>
+                        <p class="card-text">Scene: {{ status.scene }}</p>
+                        <p class="card-text">Setting: {{ status.setting }}</p>
+                        <p class="card-text">Text Content: {{ status.text_content }}</p>
+                        <ul class="list-group
+                            list-group-flush">
+                            <li v-for="(object, j) in status.objects" :key="j" class="list-group-item">
+                                <strong>{{ object.name }}</strong> - {{ object.attributes }}
+                            </li>
+                        </ul>
+                        <p class="card-text">Delete: {{ status.delete }}</p>
+                        <p class="card-text">Delete Reason: {{ status.delete_reason }}</p>
+                        <p class="card-text">Image Rank: {{ status.image_rank }}</p>
+
+                    </div>
+                </div>
             </div>
 
             <p v-if="loading">Working...</p>
             <p v-else-if="error">{{ error }}</p>
-            <p v-else>{{ status }}</p>
+
+
         </div>
     </div>
 </template>
@@ -37,19 +62,47 @@ import { backendUrl } from '../config/backend_conf';
 
 const statusUrl = computed(() => `${backendUrl}/status`);
 const processUrl = computed(() => `${backendUrl}/processtask`);
-const status = ref('');
+const imageDescriptions = ref<ImageDescription[]>();
 const loading = ref(false);
 const error = ref('');
 const imageInput = ref<HTMLInputElement | null>(null);
 const images = ref<[{}]>([]);
-
+const taskPrompt = "Analyze the image and return a detailed JSON description including objects, scene, colors and any text detected. If you cannot determine certain details, leave those fields empty.";
+const prompt = ref(taskPrompt);
+const criteriaSingleImagePrompt = [
+    "Rank the image and mark it to be deleted, if the image is raked below 5 or it meets any of the following criteria",
+    //"Duplicated motif or scene.",
+    "Low quality image.",
+    "Obscured or unclear motifs.",
+    "Poor lighting or exposure.",
+    "Poor composition or framing.",
+    "Irrelevant or uninteresting content.",
+    "Poor focus or sharpness.",
+    "Poor color balance or saturation.",
+    "Excessive noise or artifacts.",
+    "Closed eyes or unflattering facial expressions.",
+    "Finger or hand covering the lens.",
+    "Overexposed or underexposed.",
+];
+const criteria = ref(criteriaSingleImagePrompt);
 const sendMessage = async (e: Event) => {
     loading.value = true;
+    const fake = {
+
+        "result": "[{\"summary\": \"The image depicts two men standing near a stone wall with a blurred background of mountains and trees. The image quality is poor due to low resolution, blur, and potentially poor lighting.\", \"scene\": \"Outdoor, possibly a park or natural area with a stone wall.\", \"setting\": \"Landscape\", \"text_content\": \"\", \"objects\": [{\"name\": \"Man\", \"confidence\": 0.95, \"attributes\": \"Wearing a blue shirt, standing near a wall\"}, {\"name\": \"Man\", \"confidence\": 0.9, \"attributes\": \"Wearing a white shirt, standing near a wall\"}, {\"name\": \"Wall\", \"confidence\": 0.98, \"attributes\": \"Stone, appears old and weathered\"}, {\"name\": \"Tree\", \"confidence\": 0.75, \"attributes\": \"Green foliage, blurred\"}, {\"name\": \"Mountain\", \"confidence\": 0.6, \"attributes\": \"Blurred, distant\"}], \"delete\": false, \"delete_reason\": \"\", \"image_rank\": 3}, {\"summary\": \"The image appears to be a poorly composed shot of a stone wall with a blurred green background, likely a forest or foliage.\", \"scene\": \"Exterior, possibly a forest or wooded area.\", \"setting\": \"Outdoor\", \"text_content\": \"\", \"objects\": [{\"name\": \"Stone Wall\", \"confidence\": 0.95, \"attributes\": \"Rough, textured, gray, weathered\"}, {\"name\": \"Vegetation\", \"confidence\": 0.85, \"attributes\": \"Green, dense, blurred\"}, {\"name\": \"Background\", \"confidence\": 0.75, \"attributes\": \"Blurred, green\"}], \"delete\": true, \"delete_reason\": \"Low quality image. Obsured or unclear motifs. Poor composition or framing. Poor focus or sharpness. Poor lighting or exposure.\", \"image_rank\": 2}, {\"summary\": \"The image depicts two men standing near a stone wall with a blurred background of mountains and trees. The image quality is poor due to low resolution, blur, and potentially poor lighting.\", \"scene\": \"Outdoor, possibly a park or natural area with a stone wall.\", \"setting\": \"Landscape\", \"text_content\": \"\", \"objects\": [{\"name\": \"Man\", \"confidence\": 0.95, \"attributes\": \"Wearing a blue shirt, standing near a wall\"}, {\"name\": \"Man\", \"confidence\": 0.9, \"attributes\": \"Wearing a white shirt, standing near a wall\"}, {\"name\": \"Wall\", \"confidence\": 0.98, \"attributes\": \"Stone, appears old and weathered\"}, {\"name\": \"Tree\", \"confidence\": 0.75, \"attributes\": \"Green foliage, blurred\"}, {\"name\": \"Mountain\", \"confidence\": 0.6, \"attributes\": \"Blurred, distant\"}], \"delete\": false, \"delete_reason\": \"\", \"image_rank\": 3}, {\"summary\": \"The image appears to be a poorly composed shot of a stone wall with a blurred green background, likely a forest or foliage.\", \"scene\": \"Exterior, possibly a forest or wooded area.\", \"setting\": \"Outdoor\", \"text_content\": \"\", \"objects\": [{\"name\": \"Stone Wall\", \"confidence\": 0.95, \"attributes\": \"Rough, textured, gray, weathered\"}, {\"name\": \"Vegetation\", \"confidence\": 0.85, \"attributes\": \"Green, dense, blurred\"}, {\"name\": \"Background\", \"confidence\": 0.75, \"attributes\": \"Blurred, green\"}], \"delete\": true, \"delete_reason\": \"Low quality image. Obsured or unclear motifs. Poor composition or framing. Poor focus or sharpness. Poor lighting or exposure.\", \"image_rank\": 2}]",
+        "status": "success",
+        "taskId": 1742144313254
+    };
+    console.log(fake.result);
+    const newLocal: ImageDescription[] = JSON.parse(fake.result);
+    imageDescriptions.value = newLocal;
+    return;
     try {
-        // Wrap the data in a 'task' property as expected by the server
-        const payload = images.value;
+
+        const payload = { taskId: Date.now(), taskPrompt: taskPrompt, criteria: criteriaSingleImagePrompt, images: images.value };
         const response = await axios.post(processUrl.value, payload);
-        status.value = JSON.stringify(response.data);
+        imageDescriptions.value = JSON.parse(response.data) as ImageDescription[];
+        //status.value = JSON.stringify();
     } catch (err) {
         error.value = (err as Error).message;
     } finally {
@@ -65,6 +118,7 @@ function getImageURL(image: string): string {
     if (image.startsWith('data:')) return image;
     return `data:image/png;base64,${image}`;
 }
+
 async function resizeImageFile(file: File, maxWidth: number = 800): Promise<string> {
     return new Promise((resolve, reject) => {
         const img = new Image();
@@ -117,7 +171,7 @@ async function handleImageUpload(event: Event) {
 const fetchStatus = async () => {
     try {
         const response = await axios.get(statusUrl.value);
-        status.value = JSON.stringify(response.data);
+        imageDescriptions.value = JSON.stringify(response.data);
     } catch (err) {
         error.value = err.message;
     } finally {
