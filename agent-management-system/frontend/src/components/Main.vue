@@ -166,18 +166,18 @@ function getImageURL(image: string): string {
     return image.startsWith('data:') ? image : `data:image/png;base64,${image}`;
 }
 
-async function resizeImageFile(file: File, scaleFactor: number = 0): Promise<string> {
+async function resizeImageFile(file: File, scaleFactor: number = 1): Promise<string> {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => {
             // Calculate scale factor to maintain aspect ratio.
-            let scale;
-            if (scaleFactor === 0)
-                scale = 1;
-            else
-                scale = Math.min(scaleFactor / img.width, scaleFactor / img.height);
-            const width = img.width * scale;
-            const height = img.height * scale;
+            // let scale;
+            // if (scaleFactor === 0)
+            //     scale = 1;
+            // else
+            //     scale = Math.min(scaleFactor * img.width, scaleFactor * img.height);
+            const width = img.width * scaleFactor;
+            const height = img.height * scaleFactor;
 
             const canvas = document.createElement("canvas");
             canvas.width = width;
@@ -209,7 +209,7 @@ async function handleImageUpload(event: Event) {
     if (!target.files || target.files.length === 0) return;
     for (const file of Array.from(target.files)) {
         try {
-            const dataUrl = await resizeImageFile(file);
+            const dataUrl = await resizeImageFile(file, 0.5);
             const base64Data = dataUrl.split(',')[1]; // Remove base64 prefix
             images.value.push({ filename: "" + file.name, base64: base64Data });
         } catch (error) {
@@ -236,7 +236,19 @@ const sendMessage = async (e: Event) => {
     try {
 
         const id = Date.now();
-        const payload = { taskId: id, taskPrompt: taskPrompt, criteria: criteriaSingleImagePrompt, images: images.value };
+        const filteredImages = images.value.filter(image =>
+            !imageDescriptions.value.some(desc => desc.filename === image.filename)
+        );
+        if (filteredImages.length === 0) {
+            loading.value = false;
+            return;
+        }
+        const payload = {
+            taskId: id,
+            taskPrompt: taskPrompt,
+            criteria: criteriaSingleImagePrompt,
+            images: filteredImages
+        };
         const response = await axios.post(processUrl.value, payload);
         const data = response.data;
         if (data.status === "success" && id === data.taskId) {
