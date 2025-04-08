@@ -19,6 +19,9 @@ services:
       - FLASK_ENV=development
       - FLASK_APP=app.py
       - FLASK_RUN_PORT=6000
+      - ACTIVE_PROVIDER_TYPE=groq
+    secrets:
+      - GROQ_API_KEY
   
   frontend:
     build:
@@ -44,4 +47,7 @@ services:
     environment:
       - OLLAMA_KEEP_ALIVE=24h
       - OLLAMA_HOST=0.0.0.0
-    
+
+secrets:
+  GROQ_API_KEY:
+    file: GROQ_API_KEY.txt

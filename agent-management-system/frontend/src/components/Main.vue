@@ -135,21 +135,21 @@ const loading = ref(false);
 const error = ref('');
 const imageInput = ref<HTMLInputElement | null>(null);
 const images = ref<Array<{ filename: string; base64: string }>>([]);
-const taskPrompt = "Analyze the image and return a detailed JSON description including objects, scene, colors and any text detected. If you cannot determine certain details, leave those fields empty.";
+const taskPrompt = "Analyze the image and determine if it's worth keeping in my photo album. Be very critical, I only want to keep the best pictures. " +
+    "If the image is raked below 5 or it meets any of the following criteria, it should be marked for deletion.";
 const prompt = ref(taskPrompt);
 const criteriaSingleImagePrompt = [
-    "Rank the image and mark it to be deleted, if the image is raked below 5 or it meets any of the following criteria",
-    "Low quality image.",
-    "Obscured or unclear motifs.",
-    "Poor lighting or exposure.",
-    "Poor composition or framing.",
-    "Irrelevant or uninteresting content.",
-    "Poor focus or sharpness.",
-    "Poor color balance or saturation.",
-    "Excessive noise or artifacts.",
-    "Closed eyes or unflattering facial expressions.",
-    "Finger or hand covering the lens.",
-    "Overexposed or underexposed.",
+    "1. Low quality image.",
+    "2. Obscured or unclear motifs.",
+    "3. Poor lighting or exposure.",
+    "4. Poor composition or framing.",
+    "5. Irrelevant or uninteresting content.",
+    "6. Poor focus or sharpness.",
+    "7. Poor color balance or saturation.",
+    "8. Excessive noise or artifacts.",
+    "9. Closed eyes or unflattering facial expressions.",
+    "10. Finger or hand covering the lens.",
+    "11. Overexposed or underexposed.",
 ];
 const criteria = ref(criteriaSingleImagePrompt);
 
@@ -166,16 +166,10 @@ function getImageURL(image: string): string {
     return image.startsWith('data:') ? image : `data:image/png;base64,${image}`;
 }
 
-async function resizeImageFile(file: File, scaleFactor: number = 1): Promise<string> {
+async function scaleImageFile(file: File, scaleFactor: number = 1): Promise<string> {
     return new Promise((resolve, reject) => {
         const img = new Image();
         img.onload = () => {
-            // Calculate scale factor to maintain aspect ratio.
-            // let scale;
-            // if (scaleFactor === 0)
-            //     scale = 1;
-            // else
-            //     scale = Math.min(scaleFactor * img.width, scaleFactor * img.height);
             const width = img.width * scaleFactor;
             const height = img.height * scaleFactor;
 
@@ -209,7 +203,7 @@ async function handleImageUpload(event: Event) {
     if (!target.files || target.files.length === 0) return;
     for (const file of Array.from(target.files)) {
         try {
-            const dataUrl = await resizeImageFile(file, 0.5);
+            const dataUrl = await scaleImageFile(file, 0.5);
             const base64Data = dataUrl.split(',')[1]; // Remove base64 prefix
             images.value.push({ filename: "" + file.name, base64: base64Data });
         } catch (error) {
@@ -274,9 +268,6 @@ const fetchStatus = async () => {
     }
 };
 
-// onMounted(() => {
-//     fetchStatus();
-// });
 function updateDeleteStatus(filename: string, value: boolean) {
     const description = getDescription(filename);
     if (description) {

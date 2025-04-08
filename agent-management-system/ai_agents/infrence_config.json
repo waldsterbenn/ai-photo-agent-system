@@ -1,0 +1,13 @@
+{
+  "groq_config": {
+    "provider_type": "groq",
+    "model": "meta-llama/llama-4-scout-17b-16e-instruct"
+  },
+
+  "ollama_config": {
+    "provider_type": "ollama",
+    "base_url": "http://localhost:11434",
+    "model": "deepseek-r1:7b",
+    "context_window": 76800
+  }
+}

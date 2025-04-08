@@ -43,13 +43,32 @@ agent-management-system/
 ### Prerequisites
 
 - [Docker](https://www.docker.com/get-started) and Docker Compose must be installed on your system.
+- If you use an external LLM provider like Groq, you must create a key file in the project root folder and paste your API key. See [docker-compose.yml](./docker-compose.yml). (Local OLLAMA models require no API key)
 
 ### Running the Application
 
-1. **Build and Start Containers**
+### Build and Start Containers
 
-   From the project root, run:
+From the project root, run:
 
-   ```sh
-   docker-compose up --build
-   ```
+```sh
+docker-compose up
+```
+
+## Tips
+
+### Build single container
+
+For a faster dev cycle, you can build and run a single container and let the others run in the background.
+
+From the project root, spin up all containers in detached mode:
+
+```sh
+docker-compose up --build -d
+```
+
+Then rebuild and run single container as needed:
+
+```sh
+docker-compose up --build ai_agents
+```
