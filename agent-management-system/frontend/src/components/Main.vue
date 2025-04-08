@@ -12,26 +12,39 @@
                     :aria-labelledby="`analysisDetailsHeading`">
                     <div class="accordion-body">
 
-                        <h1>Image Analysis</h1>
+                        <h4>Prompt</h4>
                         <p>{{ prompt }}</p>
-                        <p>{{ criteria }}</p>
+                        <h4>Deletion criteria</h4>
+
+                        <ol v-for="crit in criteria" :key="crit" class="list-group ms-2">
+                            <li class="list-group-item d-flex align-items-start">
+                                <div class="">{{ crit }}</div>
+                            </li>
+                        </ol>
                     </div>
                 </div>
             </div>
         </div>
         <!-- Toolbar -->
-        <div class="toolbar d-flex p-2 bg-light">
+        <div class="toolbar d-flex p-2 bg-light sticky-top hstack gap-3">
+            <!-- Prompt selection dropdown -->
+            <select class="form-select p-2" style="width: auto;" v-model.number="selectedPromptId">
+                <option v-for="p in promptsOptions" :key="p.id" :value="p.id">
+                    {{ p.name }}
+                </option>
+            </select>
+
             <!-- Hidden File Input -->
             <input type="file" accept="image/*" multiple ref="imageInput" style="display:none"
                 @change="handleImageUpload" />
 
             <!-- Button to trigger image picker -->
-            <button @click="triggerImagePicker" class="btn btn-secondary me-2" title="Upload an image">
+            <button @click="triggerImagePicker" class="btn btn-secondary p-2 ms-auto" title="Upload an image">
                 <i class="bi bi-image"></i> Select Photos
             </button>
-
+            <div class="vr"></div>
             <!-- Send Message Button -->
-            <button @click="sendMessage" class="btn btn-primary">Go</button>
+            <button @click="sendMessage" class="btn btn-primary p-2">Go</button>
         </div>
 
         <!-- Content area -->
@@ -125,8 +138,10 @@
 
 <script setup lang="ts">
 import axios from 'axios';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { backendUrl } from '../config/backend_conf';
+import criteriaData from '../config/criteria.json';
+import promptsData from '../config/prompts.json';
 
 const statusUrl = computed(() => `${backendUrl}/status`);
 const processUrl = computed(() => `${backendUrl}/processtask`);
@@ -135,23 +150,23 @@ const loading = ref(false);
 const error = ref('');
 const imageInput = ref<HTMLInputElement | null>(null);
 const images = ref<Array<{ filename: string; base64: string }>>([]);
-const taskPrompt = "Analyze the image and determine if it's worth keeping in my photo album. Be very critical, I only want to keep the best pictures. " +
-    "If the image is raked below 5 or it meets any of the following criteria, it should be marked for deletion.";
+
+// Import prompt options and set the default prompt
+const promptsOptions = ref(promptsData.prompts);
+const selectedPromptId = ref(promptsOptions.value[0].id);
+const taskPrompt = promptsOptions.value[0].prompt; // assign the default prompt text
 const prompt = ref(taskPrompt);
-const criteriaSingleImagePrompt = [
-    "1. Low quality image.",
-    "2. Obscured or unclear motifs.",
-    "3. Poor lighting or exposure.",
-    "4. Poor composition or framing.",
-    "5. Irrelevant or uninteresting content.",
-    "6. Poor focus or sharpness.",
-    "7. Poor color balance or saturation.",
-    "8. Excessive noise or artifacts.",
-    "9. Closed eyes or unflattering facial expressions.",
-    "10. Finger or hand covering the lens.",
-    "11. Overexposed or underexposed.",
-];
+
+const criteriaSingleImagePrompt = criteriaData.criteria;
 const criteria = ref(criteriaSingleImagePrompt);
+
+// Update the main prompt when a new prompt is selected.
+watch(selectedPromptId, (newVal) => {
+    const selected = promptsOptions.value.find(p => p.id === newVal);
+    if (selected) {
+        prompt.value = selected.prompt;
+    }
+});
 
 // Helper: get the description matching the image's filename.
 function getDescription(filename: string): any {
@@ -239,8 +254,8 @@ const sendMessage = async (e: Event) => {
         }
         const payload = {
             taskId: id,
-            taskPrompt: taskPrompt,
-            criteria: criteriaSingleImagePrompt,
+            taskPrompt: prompt.value,
+            criteria: criteria.value,
             images: filteredImages
         };
         const response = await axios.post(processUrl.value, payload);

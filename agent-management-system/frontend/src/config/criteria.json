@@ -1,0 +1,16 @@
+{
+    "criteria":
+        [
+            "Low quality image.",
+            "Obscured or unclear motifs.",
+            "Poor lighting or exposure.",
+            "Poor composition or framing.",
+            "Irrelevant or uninteresting content.",
+            "Poor focus or sharpness.",
+            "Poor color balance or saturation.",
+            "Excessive noise or artifacts.",
+            "Closed eyes or unflattering facial expressions.",
+            "Finger or hand covering the lens.",
+            "Overexposed or underexposed."
+        ]
+}

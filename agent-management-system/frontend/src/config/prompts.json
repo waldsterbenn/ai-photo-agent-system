@@ -1,0 +1,14 @@
+{
+    "prompts": [
+        {
+            "id": 1,
+            "name": "Private Photo Album",
+            "prompt": "Analyze the image and determine if I should keep it in my private photo album. Be very critical, we only keep the best pictures. If the image is assesed to be low quality or meets any of the following criteria, mark it for deletion."
+        },
+        {
+            "id": 2,
+            "name": "Proffessional Assessment",
+            "prompt": "Make a proffessional assessment and analysis of the image. Determine if it meets industry standards for what a good photo is. Be very critical, we only keep the best pictures. If the image is assesed to be low quality or meets any of the following criteria, mark it for deletion."
+        }
+    ]
+}
