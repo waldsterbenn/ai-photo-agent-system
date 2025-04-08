@@ -1,51 +1,23 @@
 <template>
     <div class="container-fluid d-flex flex-column h-100">
-        <div class="accordion mt-3">
-            <div class="accordion-item">
-                <h2 class="accordion-header" :id="`analysisDetailsHeading`">
-                    <button class="accordion-button collapsed" type="button" data-bs-toggle="collapse"
-                        :data-bs-target="`#analysisDetails`" aria-expanded="false" :aria-controls="`analysisDetails`">
-                        Analysis information
-                    </button>
-                </h2>
-                <div :id="`analysisDetails`" class="accordion-collapse collapse"
-                    :aria-labelledby="`analysisDetailsHeading`">
-                    <div class="accordion-body">
-                        <!-- Prompt selection dropdown -->
-                        <select class="form-select p-2" style="width: auto;" v-model.number="selectedPromptId">
-                            <option v-for="p in promptsOptions" :key="p.id" :value="p.id">
-                                {{ p.name }}
-                            </option>
-                        </select>
-
-                        <h4>Prompt</h4>
-                        <p>{{ prompt }}</p>
-                        <h4>Deletion criteria</h4>
-                        <!-- Updated criteria selection list -->
-                        <ul class="list-group ms-2">
-                            <li v-for="(crit, index) in criteria" :key="index"
-                                class="list-group-item d-flex align-items-center">
-                                <input type="checkbox" v-model="crit.selected" class="form-check-input me-2"
-                                    :id="`criteria-${index}`" />
-                                <label :for="`criteria-${index}`" class="mb-0">{{ crit.text }}</label>
-                            </li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
-        </div>
         <!-- Toolbar -->
         <div class="toolbar d-flex p-2 bg-light sticky-top hstack gap-3">
-
             <!-- Hidden File Input -->
             <input type="file" accept="image/*" multiple ref="imageInput" style="display:none"
                 @change="handleImageUpload" />
+
+            <!-- Gear icon button to open analysis modal -->
+            <button @click="openAnalysisModal" class="btn btn-secondary p-2" title="Analysis Settings">
+                <i class="bi bi-gear"></i>
+            </button>
 
             <!-- Button to trigger image picker -->
             <button @click="triggerImagePicker" class="btn btn-secondary p-2 ms-auto" title="Upload an image">
                 <i class="bi bi-image"></i> Select Photos
             </button>
+
             <div class="vr"></div>
+
             <!-- Send Message Button -->
             <button @click="sendMessage" class="btn btn-primary p-2">Go</button>
         </div>
@@ -138,10 +110,48 @@
             </div>
         </div>
     </div>
+
+    <!-- Analysis Modal -->
+    <div class="modal fade" id="analysisModal" tabindex="-1" aria-labelledby="analysisModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="analysisModalLabel">Configuration</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h4>Profile</h4>
+                    <select class="form-select mb-3" v-model.number="selectedPromptId">
+                        <option v-for="p in promptsOptions" :key="p.id" :value="p.id">
+                            {{ p.name }}
+                        </option>
+                    </select>
+
+                    <h4>Prompt</h4>
+                    <p>{{ prompt }}</p>
+
+                    <h4>Deletion criteria</h4>
+                    <ul class="list-group m-2">
+                        <li v-for="(crit, index) in criteria" :key="index"
+                            class="list-group-item d-flex align-items-center">
+                            <input type="checkbox" v-model="crit.selected" class="form-check-input me-2"
+                                :id="`criteria-${index}`" />
+                            <label :for="`criteria-${index}`" class="mb-0">{{ crit.text }}</label>
+                        </li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Ok</button>
+                </div>
+            </div>
+        </div>
+    </div>
 </template>
 
 <script setup lang="ts">
 import axios from 'axios';
+// Import Bootstrap Modal from bootstrap's JS distribution
+import Modal from 'bootstrap/js/dist/modal';
 import { computed, ref, watch } from 'vue';
 import { backendUrl } from '../config/backend_conf';
 import criteriaData from '../config/criteria.json';
@@ -288,6 +298,14 @@ function updateDeleteStatus(filename: string, value: boolean) {
     const description = getDescription(filename);
     if (description) {
         description.delete = value;
+    }
+}
+
+function openAnalysisModal() {
+    const modalEl = document.getElementById('analysisModal');
+    if (modalEl) {
+        const modal = new Modal(modalEl);
+        modal.show();
     }
 }
 </script>
