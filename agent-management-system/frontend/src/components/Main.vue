@@ -145,7 +145,11 @@
                     </select>
 
                     <h4>Prompt</h4>
-                    <p>{{ prompt }}</p>
+                    <ul class="">
+                        <li v-for="(pr, index) in prompt" :key="index">
+                            <div class="">{{ pr }}</div>
+                        </li>
+                    </ul>
 
                     <h4>Deletion criteria</h4>
                     <ul class="list-group m-2">
@@ -319,7 +323,7 @@ const sendMessage = async (e: Event) => {
         const selectedCriteria = criteria.value.filter(c => c.selected).map(c => c.text);
         const payload = {
             taskId: taskId,
-            taskPrompt: prompt.value,
+            taskPrompt: prompt.value.join('\n'),
             criteria: selectedCriteria,
             images: filteredImages
         };
