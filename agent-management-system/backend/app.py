@@ -1,11 +1,13 @@
 from flask import Flask, jsonify, request
 from flask_cors import CORS  # add this import
 import requests
+import json
 
 app = Flask(__name__)
 CORS(app)  # enable CORS for all routes
 
 agent_manager_url = "http://ai_agents:6000"
+json_db_url = "http://json_db:7000"
 
 
 def submit_task(jsonData):
@@ -38,6 +40,52 @@ def process_task():
 
     result = submit_task(data)
     return jsonify({'taskId': taskId, 'status': 'success', 'result': result})
+
+
+@app.route('/create-image-description', methods=['POST'])
+def create_image_description():
+    """
+    Expects a multipart/form-data request with:
+      - 'file': The file to be uploaded.
+      - 'description': A JSON string containing the other ImageDescription fields.
+    """
+    if 'file' not in request.files:
+        return jsonify({"error": "No file uploaded"}), 400
+
+    file = request.files['file']
+    if file.filename == "":
+        return jsonify({"error": "No file selected"}), 400
+
+    # Upload file to the json_db container and get the file URI
+    upload_resp = requests.post(f"{json_db_url}/upload", files={'file': file})
+    if upload_resp.status_code != 200:
+        return jsonify({"error": "File upload failed", "details": upload_resp.text}), 500
+
+    file_uri = upload_resp.json().get("file_uri")
+    if not file_uri:
+        return jsonify({"error": "No file URI returned"}), 500
+
+    # Get ImageDescription data from the form field "description"
+    description_str = request.form.get("description")
+    if not description_str:
+        return jsonify({"error": "No image description data provided"}), 400
+
+    try:
+        description_data = json.loads(description_str)
+    except Exception as e:
+        return jsonify({"error": "Invalid JSON in description field", "details": str(e)}), 400
+
+    # Add the file URI and filename to the description data
+    description_data["image_uri"] = file_uri
+    description_data["filename"] = file.filename
+
+    # Post the complete ImageDescription to json_db
+    create_resp = requests.post(
+        f"{json_db_url}/image-descriptions", json=description_data)
+    if create_resp.status_code not in (200, 201):
+        return jsonify({"error": "Image description creation failed", "details": create_resp.text}), 500
+
+    return jsonify(create_resp.json()), 201
 
 
 if __name__ == '__main__':
