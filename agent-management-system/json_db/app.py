@@ -55,7 +55,12 @@ def get_file(filename):
 
 @app.route("/image-descriptions", methods=["GET"])
 def get_image_descriptions():
-    return jsonify(img_table.all()), 200
+    descriptions = img_table.all()
+    for item in descriptions:
+        # Convert image_uri to a full path or URL if needed
+        if "image_uri" in item:
+            item["image_uri"] = f"/{UPLOAD_FOLDER}/{item['image_uri']}"
+    return jsonify(descriptions), 200
 
 
 @app.route("/image-descriptions", methods=["POST"])

@@ -7,6 +7,7 @@ class ImageDescriptionModel(BaseModel):
     id: Optional[int] = None
     filename: str
     image_uri: str
+    thumbnail_base64: str
     summary: Optional[str]
     scene: Optional[str]
     setting: Optional[str]

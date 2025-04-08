@@ -7,7 +7,7 @@
                 @change="handleImageUpload" />
 
             <!-- Gear icon button to open analysis modal -->
-            <button @click="openAnalysisModal" class="btn btn-secondary p-2" title="Analysis Settings">
+            <button @click="openAnalysisModal" class="btn btn-secondary-subtle p-2" title="Analysis Settings">
                 <i class="bi bi-gear"></i>
             </button>
 
@@ -19,7 +19,7 @@
             <div class="vr"></div>
 
             <!-- Send Message Button -->
-            <button @click="sendMessage" class="btn btn-primary p-2">Go</button>
+            <button @click="sendMessage" class="btn btn-primary p-2" :disabled="loading">Go</button>
         </div>
 
         <!-- Content area -->
@@ -27,28 +27,30 @@
             <p v-if="loading">Working...</p>
             <p v-else-if="error">{{ error }}</p>
 
-            <div v-if="images.length > 0" class="row">
-                <div class="col-md-4 mb-3" v-for="image in images" :key="image.filename">
+            <div v-if="imageDescriptions.length > 0" :class="`row row-cols-${columnsCount} g-3`">
+                <div class="col" v-for="image in imageDescriptions" :key="image.filename">
                     <div class="card h-100 text-start">
-                        {{ image.filename }}
                         <div class="position-relative">
-                            <img :src="getImageURL(image.base64)" class="card-img-top img-thumbnail" alt="Image">
+                            <img :src="getImageURL(image.thumbnail_base64)" class="card-img-top img-thumbnail"
+                                alt="Image">
                             <!-- Each image shows its own spinner if the system is loading -->
-                            <div v-if="loading" class="spinner-overlay">
+                            <div v-if="loading && !image.summary" class="spinner-overlay">
                                 <div class="spinner-border text-primary" role="status">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
                             </div>
                         </div>
-                        <div v-if="getDescription(image.filename)" class="card-body">
-                            <div class="form-check form-switch">
-
-                                <input class="form-check-input" type="checkbox" role="switch" value=""
-                                    :id="`flexCheckDefault-${image.filename}`"
-                                    :checked="getDescription(image.filename)?.delete">
-                                <label class="form-check-label" :for="`flexCheckDefault-${image.filename}`">
-                                    Should be deleted
-                                </label>
+                        <div v-if="!!image.scene" class="card-body">
+                            <div class="card-title d-flex justify-content-between align-items-center">
+                                {{ image.filename }}
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" value=""
+                                        :id="`flexCheckDefault-${image.filename}`"
+                                        :checked="getDescription(image.filename)?.delete">
+                                    <label class="form-check-label" :for="`flexCheckDefault-${image.filename}`">
+                                        <i class="bi bi-trash"></i>
+                                    </label>
+                                </div>
                             </div>
                             <div class="accordion mt-3" :id="`accordionDetails-${image.filename}`">
                                 <div class="accordion-item">
@@ -107,6 +109,15 @@
                                 </div>
                             </div>
                         </div>
+                        <div v-else class="card-body">
+                            <div class="card-title d-flex justify-content-between align-items-center">
+                                <p>{{ image.filename }}</p>
+                                <button @click="sendMessage" class="btn" :disabled="loading">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -127,6 +138,10 @@
                         <option v-for="p in promptsOptions" :key="p.id" :value="p.id">
                             {{ p.name }}
                         </option>
+                    </select>
+                    <h4 class="mt-3">Card Columns</h4>
+                    <select class="form-select mb-3" v-model.number="columnsCount">
+                        <option v-for="n in [1, 2, 3, 4, 5]" :key="n" :value="n">{{ n }}</option>
                     </select>
 
                     <h4>Prompt</h4>
@@ -154,7 +169,7 @@
 import axios from 'axios';
 // Import Bootstrap Modal from bootstrap's JS distribution
 import Modal from 'bootstrap/js/dist/modal';
-import { computed, ref, watch } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { backendUrl } from '../config/backend_conf';
 import criteriaData from '../config/criteria.json';
 import promptsData from '../config/prompts.json';
@@ -166,7 +181,7 @@ const imageDescriptions = ref<ImageDescription[]>([]); // Ensure descriptions in
 const loading = ref(false);
 const error = ref('');
 const imageInput = ref<HTMLInputElement | null>(null);
-const images = ref<Array<{ filename: string; base64: string }>>([]);
+const columnsCount = ref(3);
 
 // Import prompt options and set the default prompt
 const promptsOptions = ref(promptsData.prompts);
@@ -190,6 +205,19 @@ watch(selectedPromptId, (newVal) => {
         prompt.value = selected.prompt;
     }
 });
+
+// Get existing ImageDescriptions from backend and set them to the imageDescriptions ref.
+async function fetchImageDescriptions() {
+    try {
+        const response = await axios.get(`${backendUrl}/image-descriptions`);
+        imageDescriptions.value = response.data.map((desc: any) => Object.assign(new ImageDescription(), desc));
+
+    } catch (err) {
+        console.error("Error fetching image descriptions:", err);
+    }
+}
+// Fetch image descriptions on component mount
+onMounted(() => fetchImageDescriptions());
 
 // Helper: get the description matching the image's filename.
 function getDescription(filename: string): any {
@@ -242,9 +270,14 @@ async function handleImageUpload(event: Event) {
     for (const file of Array.from(target.files)) {
         try {
 
+            // Scale image for local preview
+            const dataUrl = await scaleImageFile(file, 0.5);
+            const base64Data = dataUrl.split(',')[1]; // Remove base64 prefix
+
             // Prepare description data (here, only the filename is provided)
             const descriptionPayload = new ImageDescription();
             descriptionPayload.filename = file.name;
+            descriptionPayload.thumbnail_base64 = base64Data;
 
             // Prepare multipart/form-data
             const formData = new FormData();
@@ -261,12 +294,6 @@ async function handleImageUpload(event: Event) {
             );
             // Optionally update the imageDescriptions array with the response
             imageDescriptions.value.push(response.data);
-
-            // Scale image for local preview
-            const dataUrl = await scaleImageFile(file, 0.5);
-            const base64Data = dataUrl.split(',')[1]; // Remove base64 prefix
-            images.value.push({ filename: file.name, base64: base64Data });
-
         } catch (err) {
             console.error("Image upload error:", err);
             error.value = (err as Error);
@@ -279,10 +306,11 @@ const sendMessage = async (e: Event) => {
     loading.value = true;
     error.value = "";
     try {
-        const id = Date.now();
-        const filteredImages = images.value.filter(image =>
-            !imageDescriptions.value.some(desc => desc.filename === image.filename)
-        );
+        const taskId = Date.now();
+
+        const filteredImages = imageDescriptions.value.filter(image => !image.summary)
+            .map(x => ({ filename: x.filename, thumbnail_base64: x.thumbnail_base64, metadata: {} }));
+
         if (filteredImages.length === 0) {
             loading.value = false;
             return;
@@ -290,15 +318,33 @@ const sendMessage = async (e: Event) => {
         // Only include criteria that are selected
         const selectedCriteria = criteria.value.filter(c => c.selected).map(c => c.text);
         const payload = {
-            taskId: id,
+            taskId: taskId,
             taskPrompt: prompt.value,
             criteria: selectedCriteria,
             images: filteredImages
         };
         const response = await axios.post(processUrl.value, payload);
         const data = response.data;
-        if (data.status === "success" && id === data.taskId) {
-            imageDescriptions.value = JSON.parse(data.result);
+        if (data.status === "success" && taskId === data.taskId) {
+            const returnData = JSON.parse(data.result);
+            for (const newDesc of returnData) {
+                const existingIndex = imageDescriptions.value.findIndex((desc) => desc.filename === newDesc.filename);
+                if (existingIndex !== -1) {
+                    imageDescriptions.value[existingIndex] = { ...imageDescriptions.value[existingIndex], ...newDesc };
+                } else {
+                    throw Error("Image index not found. This shouldnt happen since images are always created before processing");
+                }
+
+                try {
+                    const existing = imageDescriptions.value[existingIndex];
+                    await axios.put(`${backendUrl}/update-image-description`, { description: existing }, {
+                        headers: { "Content-Type": "application/json" }
+                    });
+                } catch (err) {
+                    error.value = (err as Error).stack ? (err as Error).message : JSON.stringify(err);
+                    console.error("Error updating image description:", err);
+                }
+            }
         } else {
             error.value = data.error;
         }
@@ -334,6 +380,7 @@ function openAnalysisModal() {
         modal.show();
     }
 }
+
 </script>
 
 <style scoped>

@@ -7,6 +7,7 @@ export class ImageDetectedObject {
     
 export class ImageDescription {
     filename: string;
+    thumbnail_base64: string;
     summary: string;
     scene: string;
     setting: string;

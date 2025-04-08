@@ -16,7 +16,7 @@ class ImageAnalystAgent():
         print("Analysing image")
 
         message = self.inference.infer(prompt=self.instruction.prompt,
-                                       image=self.imageData.base64,
+                                       image=self.imageData.thumbnail_base64,
                                        format=ImageDescription.model_json_schema(),
                                        temperature=0.0
                                        )

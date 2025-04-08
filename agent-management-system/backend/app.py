@@ -42,6 +42,20 @@ def process_task():
     return jsonify({'taskId': taskId, 'status': 'success', 'result': result})
 
 
+""" Endpoint to get list of existing ImageDescriptions """
+
+
+@app.route('/image-descriptions', methods=['GET'])
+def get_image_descriptions():
+    """
+    Fetches all image descriptions from the json_db.
+    """
+    response = requests.get(f"{json_db_url}/image-descriptions")
+    if response.status_code != 200:
+        return jsonify({"error": "Failed to fetch image descriptions"}), 500
+    return jsonify(response.json()), 200
+
+
 @app.route('/create-image-description', methods=['POST'])
 def create_image_description():
     """
@@ -93,6 +107,31 @@ def create_image_description():
         return jsonify({"error": "Image description creation failed", "details": create_resp.text}), 500
 
     return jsonify(create_resp.json()), 201
+
+
+@app.route('/update-image-description', methods=['PUT'])
+def update_image_description():
+    if request.is_json:
+        data = request.get_json()
+        description_data = data.get("description")
+    else:
+        return jsonify({"error": "Request must be JSON"}), 400
+
+    if not description_data:
+        return jsonify({"error": "No image description data provided"}), 400
+
+    image_id = description_data.get("id")
+    if not image_id:
+        return jsonify({"error": "No image id provided in payload"}), 400
+
+    update_resp = requests.put(
+        f"{json_db_url}/image-descriptions/{image_id}",
+        json=description_data
+    )
+    if update_resp.status_code not in (200, 201):
+        return jsonify({"error": "Image description update failed", "details": update_resp.text}), 500
+
+    return jsonify(update_resp.json()), update_resp.status_code
 
 
 if __name__ == '__main__':
