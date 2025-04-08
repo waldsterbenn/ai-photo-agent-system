@@ -11,28 +11,31 @@
                 <div :id="`analysisDetails`" class="accordion-collapse collapse"
                     :aria-labelledby="`analysisDetailsHeading`">
                     <div class="accordion-body">
+                        <!-- Prompt selection dropdown -->
+                        <select class="form-select p-2" style="width: auto;" v-model.number="selectedPromptId">
+                            <option v-for="p in promptsOptions" :key="p.id" :value="p.id">
+                                {{ p.name }}
+                            </option>
+                        </select>
 
                         <h4>Prompt</h4>
                         <p>{{ prompt }}</p>
                         <h4>Deletion criteria</h4>
-
-                        <ol v-for="crit in criteria" :key="crit" class="list-group ms-2">
-                            <li class="list-group-item d-flex align-items-start">
-                                <div class="">{{ crit }}</div>
+                        <!-- Updated criteria selection list -->
+                        <ul class="list-group ms-2">
+                            <li v-for="(crit, index) in criteria" :key="index"
+                                class="list-group-item d-flex align-items-center">
+                                <input type="checkbox" v-model="crit.selected" class="form-check-input me-2"
+                                    :id="`criteria-${index}`" />
+                                <label :for="`criteria-${index}`" class="mb-0">{{ crit.text }}</label>
                             </li>
-                        </ol>
+                        </ul>
                     </div>
                 </div>
             </div>
         </div>
         <!-- Toolbar -->
         <div class="toolbar d-flex p-2 bg-light sticky-top hstack gap-3">
-            <!-- Prompt selection dropdown -->
-            <select class="form-select p-2" style="width: auto;" v-model.number="selectedPromptId">
-                <option v-for="p in promptsOptions" :key="p.id" :value="p.id">
-                    {{ p.name }}
-                </option>
-            </select>
 
             <!-- Hidden File Input -->
             <input type="file" accept="image/*" multiple ref="imageInput" style="display:none"
@@ -102,12 +105,13 @@
                                             </p>
                                             <p class="card-text">
                                                 <strong>Setting:</strong> {{
-                                                    getDescription(image.filename)?.setting ||
-                                                    '' }}
+                                                    getDescription(image.filename)?.setting || ''
+                                                }}
                                             </p>
                                             <p class="card-text">
                                                 <strong>Text Content:</strong> {{
-                                                    getDescription(image.filename)?.text_content || '' }}
+                                                    getDescription(image.filename)?.text_content || ''
+                                                }}
                                             </p>
                                             <div v-if="getDescription(image.filename)?.objects?.length">
                                                 <strong>Objects:</strong>
@@ -154,11 +158,17 @@ const images = ref<Array<{ filename: string; base64: string }>>([]);
 // Import prompt options and set the default prompt
 const promptsOptions = ref(promptsData.prompts);
 const selectedPromptId = ref(promptsOptions.value[0].id);
-const taskPrompt = promptsOptions.value[0].prompt; // assign the default prompt text
+const taskPrompt = promptsOptions.value[0].prompt;
 const prompt = ref(taskPrompt);
 
+// Update criteria: convert array of strings to objects with selected=true
 const criteriaSingleImagePrompt = criteriaData.criteria;
-const criteria = ref(criteriaSingleImagePrompt);
+const criteria = ref(
+    criteriaSingleImagePrompt.map((crit: string) => ({
+        text: crit,
+        selected: true
+    }))
+);
 
 // Update the main prompt when a new prompt is selected.
 watch(selectedPromptId, (newVal) => {
@@ -232,18 +242,7 @@ async function handleImageUpload(event: Event) {
 const sendMessage = async (e: Event) => {
     loading.value = true;
     error.value = "";
-    // const fake = {
-
-    //     "result": "[{\"summary\": \"The image depicts two men standing near a stone wall with a blurred background of mountains and trees. The image quality is poor due to low resolution, blur, and potentially poor lighting.\", \"scene\": \"Outdoor, possibly a park or natural area with a stone wall.\", \"setting\": \"Landscape\", \"text_content\": \"\", \"objects\": [{\"name\": \"Man\", \"confidence\": 0.95, \"attributes\": \"Wearing a blue shirt, standing near a wall\"}, {\"name\": \"Man\", \"confidence\": 0.9, \"attributes\": \"Wearing a white shirt, standing near a wall\"}, {\"name\": \"Wall\", \"confidence\": 0.98, \"attributes\": \"Stone, appears old and weathered\"}, {\"name\": \"Tree\", \"confidence\": 0.75, \"attributes\": \"Green foliage, blurred\"}, {\"name\": \"Mountain\", \"confidence\": 0.6, \"attributes\": \"Blurred, distant\"}], \"delete\": false, \"delete_reason\": \"\", \"image_rank\": 3}, {\"summary\": \"The image appears to be a poorly composed shot of a stone wall with a blurred green background, likely a forest or foliage.\", \"scene\": \"Exterior, possibly a forest or wooded area.\", \"setting\": \"Outdoor\", \"text_content\": \"\", \"objects\": [{\"name\": \"Stone Wall\", \"confidence\": 0.95, \"attributes\": \"Rough, textured, gray, weathered\"}, {\"name\": \"Vegetation\", \"confidence\": 0.85, \"attributes\": \"Green, dense, blurred\"}, {\"name\": \"Background\", \"confidence\": 0.75, \"attributes\": \"Blurred, green\"}], \"delete\": true, \"delete_reason\": \"Low quality image. Obsured or unclear motifs. Poor composition or framing. Poor focus or sharpness. Poor lighting or exposure.\", \"image_rank\": 2}, {\"summary\": \"The image depicts two men standing near a stone wall with a blurred background of mountains and trees. The image quality is poor due to low resolution, blur, and potentially poor lighting.\", \"scene\": \"Outdoor, possibly a park or natural area with a stone wall.\", \"setting\": \"Landscape\", \"text_content\": \"\", \"objects\": [{\"name\": \"Man\", \"confidence\": 0.95, \"attributes\": \"Wearing a blue shirt, standing near a wall\"}, {\"name\": \"Man\", \"confidence\": 0.9, \"attributes\": \"Wearing a white shirt, standing near a wall\"}, {\"name\": \"Wall\", \"confidence\": 0.98, \"attributes\": \"Stone, appears old and weathered\"}, {\"name\": \"Tree\", \"confidence\": 0.75, \"attributes\": \"Green foliage, blurred\"}, {\"name\": \"Mountain\", \"confidence\": 0.6, \"attributes\": \"Blurred, distant\"}], \"delete\": false, \"delete_reason\": \"\", \"image_rank\": 3}, {\"summary\": \"The image appears to be a poorly composed shot of a stone wall with a blurred green background, likely a forest or foliage.\", \"scene\": \"Exterior, possibly a forest or wooded area.\", \"setting\": \"Outdoor\", \"text_content\": \"\", \"objects\": [{\"name\": \"Stone Wall\", \"confidence\": 0.95, \"attributes\": \"Rough, textured, gray, weathered\"}, {\"name\": \"Vegetation\", \"confidence\": 0.85, \"attributes\": \"Green, dense, blurred\"}, {\"name\": \"Background\", \"confidence\": 0.75, \"attributes\": \"Blurred, green\"}], \"delete\": true, \"delete_reason\": \"Low quality image. Obsured or unclear motifs. Poor composition or framing. Poor focus or sharpness. Poor lighting or exposure.\", \"image_rank\": 2, \"filename\": \"DSC00067.JPG\"}]",
-    //     "status": "success",
-    //     "taskId": 1742144313254
-    // };
-    // console.log(fake.result);
-    // const newLocal: any[] = JSON.parse(fake.result);
-    // imageDescriptions.value = newLocal;
-    // return;
     try {
-
         const id = Date.now();
         const filteredImages = images.value.filter(image =>
             !imageDescriptions.value.some(desc => desc.filename === image.filename)
@@ -252,10 +251,12 @@ const sendMessage = async (e: Event) => {
             loading.value = false;
             return;
         }
+        // Only include criteria that are selected
+        const selectedCriteria = criteria.value.filter(c => c.selected).map(c => c.text);
         const payload = {
             taskId: id,
             taskPrompt: prompt.value,
-            criteria: criteria.value,
+            criteria: selectedCriteria,
             images: filteredImages
         };
         const response = await axios.post(processUrl.value, payload);
