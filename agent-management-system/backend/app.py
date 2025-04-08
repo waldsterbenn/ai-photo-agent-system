@@ -56,15 +56,6 @@ def create_image_description():
     if file.filename == "":
         return jsonify({"error": "No file selected"}), 400
 
-    # Upload file to the json_db container and get the file URI
-    upload_resp = requests.post(f"{json_db_url}/upload", files={'file': file})
-    if upload_resp.status_code != 200:
-        return jsonify({"error": "File upload failed", "details": upload_resp.text}), 500
-
-    file_uri = upload_resp.json().get("file_uri")
-    if not file_uri:
-        return jsonify({"error": "No file URI returned"}), 500
-
     # Get ImageDescription data from the form field "description"
     description_str = request.form.get("description")
     if not description_str:
@@ -75,9 +66,25 @@ def create_image_description():
     except Exception as e:
         return jsonify({"error": "Invalid JSON in description field", "details": str(e)}), 400
 
+    # Override name
+    file.filename = description_data.get("filename", file.filename)
+
+    # Upload file to the json_db container and get the file URI
+    upload_resp = requests.post(
+        f"{json_db_url}/upload",
+        files={"file": (file.filename, file.stream, file.mimetype)},
+        data={"filename": file.filename}
+    )
+    if upload_resp.status_code != 200:
+        return jsonify({"error": "File upload failed", "details": upload_resp.text}), 500
+
+    file_uri = upload_resp.json().get("file_uri")
+    if not file_uri:
+        return jsonify({"error": "No file URI returned"}), 500
+
     # Add the file URI and filename to the description data
     description_data["image_uri"] = file_uri
-    description_data["filename"] = file.filename
+    # description_data["filename"] = file.filename
 
     # Post the complete ImageDescription to json_db
     create_resp = requests.post(
@@ -89,4 +96,4 @@ def create_image_description():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, debug=True)

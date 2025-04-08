@@ -30,6 +30,7 @@
             <div v-if="images.length > 0" class="row">
                 <div class="col-md-4 mb-3" v-for="image in images" :key="image.filename">
                     <div class="card h-100 text-start">
+                        {{ image.filename }}
                         <div class="position-relative">
                             <img :src="getImageURL(image.base64)" class="card-img-top img-thumbnail" alt="Image">
                             <!-- Each image shows its own spinner if the system is loading -->
@@ -41,6 +42,7 @@
                         </div>
                         <div v-if="getDescription(image.filename)" class="card-body">
                             <div class="form-check form-switch">
+
                                 <input class="form-check-input" type="checkbox" role="switch" value=""
                                     :id="`flexCheckDefault-${image.filename}`"
                                     :checked="getDescription(image.filename)?.delete">
@@ -156,10 +158,11 @@ import { computed, ref, watch } from 'vue';
 import { backendUrl } from '../config/backend_conf';
 import criteriaData from '../config/criteria.json';
 import promptsData from '../config/prompts.json';
+import { ImageDescription } from '../data/ImageDescription';
 
 const statusUrl = computed(() => `${backendUrl}/status`);
 const processUrl = computed(() => `${backendUrl}/processtask`);
-const imageDescriptions = ref<any[]>([]); // Ensure descriptions include a "filename" property if available.
+const imageDescriptions = ref<ImageDescription[]>([]); // Ensure descriptions include a "filename" property if available.
 const loading = ref(false);
 const error = ref('');
 const imageInput = ref<HTMLInputElement | null>(null);
@@ -238,12 +241,35 @@ async function handleImageUpload(event: Event) {
     if (!target.files || target.files.length === 0) return;
     for (const file of Array.from(target.files)) {
         try {
+
+            // Prepare description data (here, only the filename is provided)
+            const descriptionPayload = new ImageDescription();
+            descriptionPayload.filename = file.name;
+
+            // Prepare multipart/form-data
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('description', JSON.stringify(descriptionPayload));
+
+            // Call create-image-description endpoint
+            const response = await axios.post(
+                `${backendUrl}/create-image-description`,
+                formData,
+                {
+                    headers: { "Content-Type": "multipart/form-data" }
+                }
+            );
+            // Optionally update the imageDescriptions array with the response
+            imageDescriptions.value.push(response.data);
+
+            // Scale image for local preview
             const dataUrl = await scaleImageFile(file, 0.5);
             const base64Data = dataUrl.split(',')[1]; // Remove base64 prefix
-            images.value.push({ filename: "" + file.name, base64: base64Data });
-        } catch (error) {
-            console.error("Image upload error:", error);
-            error.value = (error as Error).message;
+            images.value.push({ filename: file.name, base64: base64Data });
+
+        } catch (err) {
+            console.error("Image upload error:", err);
+            error.value = (err as Error);
         }
     }
     target.value = "";

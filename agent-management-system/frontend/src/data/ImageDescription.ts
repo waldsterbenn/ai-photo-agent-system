@@ -1,11 +1,11 @@
 
-class ImageDetectedObject {
+export class ImageDetectedObject {
     name: string
     confidence: number;
     attributes: string;
 }
     
-class ImageDescription {
+export class ImageDescription {
     filename: string;
     summary: string;
     scene: string;

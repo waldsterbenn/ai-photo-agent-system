@@ -2,3 +2,4 @@ Flask==2.0.3
 flask-cors
 requests==2.26.0
 Werkzeug<3.0
+debugpy

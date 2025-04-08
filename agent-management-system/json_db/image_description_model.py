@@ -6,12 +6,12 @@ class ImageDescriptionModel(BaseModel):
     # id field auto-assigned; not required in POST
     id: Optional[int] = None
     filename: str
-    summary: str
-    scene: str
-    setting: str
-    text_content: str
-    objects:  List[Dict[str, Any]]
-    delete: bool
-    delete_reason: str
-    image_rank: int
     image_uri: str
+    summary: Optional[str]
+    scene: Optional[str]
+    setting: Optional[str]
+    text_content: Optional[str]
+    objects:  Optional[List[Dict[str, Any]]]
+    delete: Optional[bool]
+    delete_reason: Optional[str]
+    image_rank: Optional[int]

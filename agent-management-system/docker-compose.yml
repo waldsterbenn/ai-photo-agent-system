@@ -5,15 +5,16 @@ services:
       context: ./backend
     ports:
       - "5000:5000"
+      - 5679:5678
     environment:
-      - FLASK_ENV=development
+      - FLASK_DEBUG=1
+      - FLASK_APP=app.py
           
   ai_agents:
     build:
       context: ./ai_agents
     ports:
       - "6000:6000"
-      - "5678:5678"
     environment:
       - FLASK_ENV=development
       - FLASK_APP=app.py
@@ -50,9 +51,16 @@ services:
   json_db:
     build:
       context: ./json_db
+    restart: unless-stopped
+    stop_signal: SIGINT
     ports:
       - "7000:7000"
+      - 5680:5678
+    environment:
+      - FLASK_DEBUG=1
+      - FLASK_APP=app.py
     volumes:
+      - ./json_db:/app
       - json_db_data:/app
       - json_db_files:/app/uploads
 

@@ -1,3 +1,4 @@
+# import ptvsd
 import os
 from flask import Flask, request, jsonify, send_from_directory
 from flask_cors import CORS
@@ -39,7 +40,7 @@ def upload_file():
     file_path = os.path.join(UPLOAD_FOLDER, file.filename)
     file.save(file_path)
     # Create a URI (this can be a static path or URL as needed for your environment)
-    file_uri = f"/files/{file.filename}"
+    file_uri = f"/{UPLOAD_FOLDER}/{file.filename}"
     return jsonify({"file_uri": file_uri}), 200
 
 # Serve uploaded files
@@ -159,4 +160,5 @@ def delete_user(user_id):
 
 if __name__ == "__main__":
     # Listen on all interfaces on port 7000
-    app.run(host="0.0.0.0", port=7000)
+    # ptvsd.enable_attach(address=('0.0.0.0', 5678))
+    app.run(debug=True, host="0.0.0.0", port=7000)

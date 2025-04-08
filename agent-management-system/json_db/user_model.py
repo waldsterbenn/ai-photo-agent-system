@@ -1,5 +1,5 @@
-from pydantic import BaseModel, ValidationError
-from typing import Any, Dict, List, Optional
+from pydantic import BaseModel
+from typing import Optional
 
 
 class UserModel(BaseModel):

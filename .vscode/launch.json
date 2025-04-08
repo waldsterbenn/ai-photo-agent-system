@@ -5,7 +5,7 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Python Debugger: Remote Attach",
+      "name": "Agents Python Debugger: Remote Attach",
       "type": "debugpy",
       "request": "attach",
       "connect": {
@@ -15,6 +15,36 @@
       "pathMappings": [
         {
           "localRoot": "${workspaceFolder}\\agent-management-system\\ai_agents",
+          "remoteRoot": "/app"
+        }
+      ]
+    },
+    {
+      "name": "JsonDb Python Debugger: Remote Attach",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": {
+        "host": "localhost",
+        "port": 5680
+      },
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}\\agent-management-system\\json_db",
+          "remoteRoot": "/app"
+        }
+      ]
+    },
+    {
+      "name": "Backend Python Debugger: Remote Attach",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": {
+        "host": "localhost",
+        "port": 5679
+      },
+      "pathMappings": [
+        {
+          "localRoot": "${workspaceFolder}\\agent-management-system\\backend",
           "remoteRoot": "/app"
         }
       ]
