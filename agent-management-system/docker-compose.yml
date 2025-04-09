@@ -6,6 +6,7 @@ services:
       - "6000:6000"
     environment:
       - FLASK_APP=app.py
+      - FLASK_RUN_HOST=0.0.0.0  # Ensure FLASK_RUN_HOST is set if using 'flask run' command
       - FLASK_RUN_PORT=6000
       - ACTIVE_PROVIDER_TYPE=groq
     secrets:

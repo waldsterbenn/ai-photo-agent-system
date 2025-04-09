@@ -32,7 +32,3 @@ def submit_task():
     plan = manager.plan_task(taskPrompt, criteria, image_carriers)
     result = manager.execute_task()
     return jsonify(result)
-
-
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=6000)
