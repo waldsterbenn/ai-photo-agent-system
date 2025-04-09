@@ -54,7 +54,6 @@
                                     <label class="form-check-label" :for="`flexCheckDefault-${imgDesc.filename}`">
                                         <i class="bi bi-trash"></i>
                                     </label>
-                                    {{ imgDesc.delete ? 'Delete' : 'Keep' }}
                                 </div>
                             </div>
                             <div class="accordion mt-3" :id="`accordionDetails-${imgDesc.filename}`">
