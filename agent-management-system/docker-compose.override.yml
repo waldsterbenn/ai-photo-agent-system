@@ -1,0 +1,44 @@
+version: '3.8'
+services:
+  backend:
+    ports:
+      - "5679:5678"
+    environment:
+      - FLASK_DEBUG=1
+    develop:
+      watch:
+        - action: sync         # Sync changes from host to container
+          path: ./backend      # Source path on your host machine (relative to docker-compose.yml)
+          target: /app         # Destination path inside the container (matches WORKDIR in Dockerfile)
+          ignore:              # Optional: Specify patterns to ignore syncing
+            - __pycache__/
+            - '*.pyc'
+            - .git
+            - venv/                         # Or any virtual environment folder if present
+        - action: rebuild                   # Rebuild the image if dependencies change
+          path: ./backend/requirements.txt  # Make sure path is correct relative to compose file
+    #command: ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "app.py"]
+    command: ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", "flask", "run", "--no-reload"]
+  
+  json_db:
+    ports:
+      - "5680:5678"
+    environment:
+      - FLASK_DEBUG=1
+    develop:
+      watch:
+        - action: sync         # Sync changes from host to container
+          path: ./json_db      # Source path on your host machine (relative to docker-compose.yml)
+          target: /app         # Destination path inside the container (matches WORKDIR in Dockerfile)
+          ignore:              # Optional: Specify patterns to ignore syncing
+            - __pycache__/
+            - '*.pyc'
+            - .git
+            - venv/                         # Or any virtual environment folder if present
+        - action: rebuild                   # Rebuild the image if dependencies change
+          path: ./json_db/requirements.txt  # Make sure path is correct relative to compose file
+    #command: ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "app.py"]
+    command: ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", "flask", "run", "--no-reload"]
+  
+
+  

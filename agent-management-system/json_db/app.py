@@ -10,17 +10,21 @@ from user_model import UserModel
 app = Flask(__name__)
 CORS(app)
 
-# Ensure uploads directory exists
-UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")
+BASE_FOLDER = os.path.dirname(os.path.join(os.getcwd(), "app"))
+DATA_FOLDER = os.path.join(BASE_FOLDER, "data")
+
+UPLOAD_FOLDER = os.path.join(DATA_FOLDER, "image_uploads")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 # Initialize TinyDB (data stored in db.json)
-db = TinyDB("db.json")
+DB_PATH = os.path.join(DATA_FOLDER, "db.json")
+db = TinyDB(DB_PATH)
 img_table = db.table("image_descriptions")
 user_table = db.table("users")
 
-
 # Helper function to assign an auto-incremented id
+
+
 def get_next_id(table) -> int:
     items = table.all()
     if not items:
@@ -104,10 +108,16 @@ def update_image_description(item_id):
 @app.route("/image-descriptions/<int:item_id>", methods=["DELETE"])
 def delete_image_description(item_id):
     Item = Query()
-    if not img_table.get(Item.id == item_id):
-        return jsonify({"error": "Not found"}), 404
+    table_item = img_table.get(Item.id == item_id)
+    if not table_item:
+        return jsonify({"error": f"Item with id={item_id}Not found"}), 404
+    filePath = table_item["image_uri"]
+    if os.path.exists(filePath):
+        os.remove(filePath)
+
     img_table.remove(Item.id == item_id)
     return jsonify({"message": "Deleted"}), 200
+
 
 # CRUD endpoints for Users
 
@@ -163,7 +173,8 @@ def delete_user(user_id):
     return jsonify({"message": "Deleted"}), 200
 
 
-if __name__ == "__main__":
-    # Listen on all interfaces on port 7000
-    # ptvsd.enable_attach(address=('0.0.0.0', 5678))
-    app.run(debug=True, host="0.0.0.0", port=7000)
+# if __name__ == "__main__":
+#     print("Starting server...")
+#     print("Starting server...")
+#     # Listen on all interfaces on port 7000
+#     app.run(debug=True, host="0.0.0.0", port=7000)

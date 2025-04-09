@@ -133,6 +133,33 @@ def update_image_description():
 
     return jsonify(update_resp.json()), update_resp.status_code
 
+# Endpoint to delete a list of ImageDescriptions by their IDs
 
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+
+@app.route('/delete-image-descriptions', methods=['DELETE'])
+def delete_image_descriptions():
+    """
+    Expects a JSON body with a list of IDs to delete.
+    """
+    data = request.get_json()
+    ids = data.get("ids")
+    ids = data.get("ids")
+    if not ids:
+        return jsonify({"error": "No IDs provided"}), 400
+
+    # Send the delete request to the json_db
+    for image_id in ids:
+        id = image_id["id"]
+        delete_resp = requests.delete(
+            f"{json_db_url}/image-descriptions/{id}")
+        if delete_resp.status_code != 200:
+            return jsonify({"error": "Image description deletion failed", "details": delete_resp.text}), 500
+
+    return jsonify(delete_resp.json()), 200
+
+
+# if __name__ == '__main__':
+#     print("Starting server...")
+#     print("Starting server...")
+
+#     app.run(host='0.0.0.0', port=5000, debug=True)

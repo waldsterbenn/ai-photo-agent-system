@@ -12,11 +12,16 @@
             </button>
 
             <!-- Button to trigger image picker -->
-            <button @click="triggerImagePicker" class="btn btn-secondary p-2 ms-auto" title="Upload an image">
+            <button @click="triggerImagePicker" class="btn btn-secondary p-2 ms-auto" title="Upload a photo">
                 <i class="bi bi-image"></i> Select Photos
             </button>
 
             <div class="vr"></div>
+
+            <!-- Button to delete photos -->
+            <button @click="deleteSelected" class="btn btn-secondary p-2" title="Delete selected phots">
+                <i class="bi bi-trash"></i>
+            </button>
 
             <!-- Send Message Button -->
             <button @click="sendMessage" class="btn btn-primary p-2" :disabled="loading">Go</button>
@@ -28,72 +33,73 @@
             <p v-else-if="error">{{ error }}</p>
 
             <div v-if="imageDescriptions.length > 0" :class="`row row-cols-${columnsCount} g-3`">
-                <div class="col" v-for="image in imageDescriptions" :key="image.filename">
+                <div class="col" v-for="imgDesc in imageDescriptions" :key="imgDesc.filename">
                     <div class="card h-100 text-start">
                         <div class="position-relative">
-                            <img :src="getImageURL(image.thumbnail_base64)" class="card-img-top img-thumbnail"
+                            <img :src="getImageURL(imgDesc.thumbnail_base64)" class="card-img-top img-thumbnail"
                                 alt="Image">
                             <!-- Each image shows its own spinner if the system is loading -->
-                            <div v-if="loading && !image.summary" class="spinner-overlay">
+                            <div v-if="loading && !imgDesc.summary" class="spinner-overlay">
                                 <div class="spinner-border text-primary" role="status">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
                             </div>
                         </div>
-                        <div v-if="!!image.scene" class="card-body">
+                        <div v-if="!!imgDesc.scene" class="card-body">
                             <div class="card-title d-flex justify-content-between align-items-center">
-                                {{ image.filename }}
+                                {{ imgDesc.filename }}
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" role="switch" value=""
-                                        :id="`flexCheckDefault-${image.filename}`"
-                                        :checked="getDescription(image.filename)?.delete">
-                                    <label class="form-check-label" :for="`flexCheckDefault-${image.filename}`">
+                                        :id="`flexCheckDefault-${imgDesc.filename}`" v-model="imgDesc.delete">
+                                    <label class="form-check-label" :for="`flexCheckDefault-${imgDesc.filename}`">
                                         <i class="bi bi-trash"></i>
                                     </label>
+                                    {{ imgDesc.delete ? 'Delete' : 'Keep' }}
                                 </div>
                             </div>
-                            <div class="accordion mt-3" :id="`accordionDetails-${image.filename}`">
+                            <div class="accordion mt-3" :id="`accordionDetails-${imgDesc.filename}`">
                                 <div class="accordion-item">
-                                    <h2 class="accordion-header" :id="`headingDetails-${image.filename}`">
+                                    <h2 class="accordion-header" :id="`headingDetails-${imgDesc.filename}`">
                                         <button class="accordion-button collapsed" type="button"
                                             data-bs-toggle="collapse"
-                                            :data-bs-target="`#collapseDetails-${image.filename}`" aria-expanded="false"
-                                            :aria-controls="`collapseDetails-${image.filename}`">
-                                            Quality {{ getDescription(image.filename)?.image_rank }}/10
+                                            :data-bs-target="`#collapseDetails-${imgDesc.filename}`"
+                                            aria-expanded="false"
+                                            :aria-controls="`collapseDetails-${imgDesc.filename}`">
+                                            Quality {{ imgDesc.image_rank }}/10
                                         </button>
                                     </h2>
-                                    <div :id="`collapseDetails-${image.filename}`" class="accordion-collapse collapse"
-                                        :aria-labelledby="`headingDetails-${image.filename}`">
+                                    <div :id="`collapseDetails-${imgDesc.filename}`" class="accordion-collapse collapse"
+                                        :aria-labelledby="`headingDetails-${imgDesc.filename}`">
                                         <div class="accordion-body">
 
                                             <p class="card-text">
                                                 <strong>The Photo:</strong>
-                                                {{ getDescription(image.filename)?.summary || '' }}
+                                                {{ imgDesc?.summary || '' }}
                                             </p>
                                             <p class="card-text">
                                                 <strong>Delete Reason:</strong> {{
-                                                    getDescription(image.filename)?.delete_reason || '' }}
+                                                    imgDesc?.delete_reason || '' }}
                                             </p>
                                             <p class="card-text">
                                                 <strong>Scene:</strong> {{
-                                                    getDescription(image.filename)?.scene || ''
+                                                    imgDesc?.scene || ''
                                                 }}
                                             </p>
                                             <p class="card-text">
                                                 <strong>Setting:</strong> {{
-                                                    getDescription(image.filename)?.setting || ''
+                                                    imgDesc?.setting || ''
                                                 }}
                                             </p>
                                             <p class="card-text">
                                                 <strong>Text Content:</strong> {{
-                                                    getDescription(image.filename)?.text_content || ''
+                                                    imgDesc?.text_content || ''
                                                 }}
                                             </p>
-                                            <div v-if="getDescription(image.filename)?.objects?.length">
+                                            <div v-if="imgDesc?.objects?.length">
                                                 <strong>Objects:</strong>
                                                 <div>
-                                                    <ul v-for="object in getDescription(image.filename).objects"
-                                                        :key="object.name" class="list-group">
+                                                    <ul v-for="object in imgDesc.objects" :key="object.name"
+                                                        class="list-group">
                                                         <li class="list-group-item d-flex align-items-start">
                                                             <div class="ms-2 me-auto">
                                                                 <div class="fw-italic">{{ object.name }}
@@ -111,11 +117,30 @@
                         </div>
                         <div v-else class="card-body">
                             <div class="card-title d-flex justify-content-between align-items-center">
-                                <p>{{ image.filename }}</p>
-                                <button @click="sendMessage" class="btn" :disabled="loading">
-                                    <i class="bi bi-eye"></i>
-                                </button>
+                                <div class="vstack">
+                                    <div class="">{{ imgDesc.filename }}</div>
+                                    <div class="hstack">
+                                        <div class="p-2">
+                                            <button @click="sendMessage" class="btn btn-outline-primary"
+                                                :disabled="loading">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            Analyse
+                                        </div>
+                                        <div class="p-2  ms-auto">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" role="switch" value=""
+                                                    :id="`flexCheckDefault-${imgDesc.filename}`"
+                                                    v-model="imgDesc.delete">
+                                                <label class="form-check-label"
+                                                    :for="`flexCheckDefault-${imgDesc.filename}`">
+                                                    <i class="bi bi-trash"></i>
+                                                </label>
 
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -181,6 +206,7 @@ import { ImageDescription } from '../data/ImageDescription';
 
 const statusUrl = computed(() => `${backendUrl}/status`);
 const processUrl = computed(() => `${backendUrl}/processtask`);
+const deleteUrl = computed(() => `${backendUrl}/delete-image-descriptions`);
 const imageDescriptions = ref<ImageDescription[]>([]); // Ensure descriptions include a "filename" property if available.
 const loading = ref(false);
 const error = ref('');
@@ -212,8 +238,12 @@ watch(selectedPromptId, (newVal) => {
 
 // Get existing ImageDescriptions from backend and set them to the imageDescriptions ref.
 async function fetchImageDescriptions() {
+    console.log("Fetching image descriptions...");
     try {
         const response = await axios.get(`${backendUrl}/image-descriptions`);
+        if (response.data.length === 0) {
+            return;
+        }
         imageDescriptions.value = response.data.map((desc: any) => Object.assign(new ImageDescription(), desc));
 
     } catch (err) {
@@ -222,11 +252,6 @@ async function fetchImageDescriptions() {
 }
 // Fetch image descriptions on component mount
 onMounted(() => fetchImageDescriptions());
-
-// Helper: get the description matching the image's filename.
-function getDescription(filename: string): any {
-    return imageDescriptions.value.find(desc => desc.filename === filename);
-}
 
 function triggerImagePicker() {
     imageInput.value?.click();
@@ -358,6 +383,30 @@ const sendMessage = async (e: Event) => {
         loading.value = false;
     }
 };
+
+async function deleteSelected(params: Event) {
+    loading.value = true;
+    error.value = "";
+    try {
+        const selectedImages = imageDescriptions.value.filter(imgDesc => imgDesc.delete);
+        if (selectedImages.length === 0) return;
+
+        const payload = {
+            taskId: Date.now(),
+            ids: selectedImages.map(x => ({ id: x.id }))
+        };
+        const response = await axios.delete(deleteUrl.value, { data: payload });
+        if (response.status === 200) {
+            imageDescriptions.value = imageDescriptions.value.filter(image => !image.delete);
+        } else {
+            error.value = data.error;
+        }
+    } catch (err) {
+        error.value = (err as Error).stack ? (err as Error).message : JSON.stringify(err);
+    } finally {
+        loading.value = false;
+    }
+}
 
 const fetchStatus = async () => {
     try {
