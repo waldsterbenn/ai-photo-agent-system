@@ -16,4 +16,6 @@ export class ImageDescription {
     delete: boolean;
     delete_reason: string;
     image_rank: number;
+    keep_reason: string;
+    forencic_analysis: string;
 }

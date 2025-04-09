@@ -2,7 +2,6 @@ import os
 import json
 from groq import Groq
 from typing import Any, Dict, Optional
-from datastructures.image_description import ImageDescription
 from infrence_provider.infrence_provider import InferenceProvider
 
 config_path = os.path.abspath(os.path.join(

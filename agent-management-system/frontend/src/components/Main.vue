@@ -75,11 +75,18 @@
                                                 <strong>The Photo:</strong>
                                                 {{ imgDesc?.summary || '' }}
                                             </p>
-                                            <p class="card-text">
+
+                                            <p v-if="imgDesc?.delete_reason" class="card-text">
                                                 <strong>Delete Reason:</strong> {{
                                                     imgDesc?.delete_reason || '' }}
                                             </p>
-                                            <p class="card-text">
+
+                                            <p v-if="imgDesc?.keep_reason" class="card-text">
+                                                <strong>Keep Reason:</strong> {{
+                                                    imgDesc?.keep_reason || ''
+                                                }}
+                                            </p>
+                                            <p v-if="imgDesc?.scene" class="card-text">
                                                 <strong>Scene:</strong> {{
                                                     imgDesc?.scene || ''
                                                 }}
@@ -89,11 +96,18 @@
                                                     imgDesc?.setting || ''
                                                 }}
                                             </p>
-                                            <p class="card-text">
+                                            <p v-if="imgDesc?.text_content" class="card-text">
                                                 <strong>Text Content:</strong> {{
                                                     imgDesc?.text_content || ''
                                                 }}
                                             </p>
+
+                                            <p v-if="imgDesc?.forencic_analysis" class="card-text">
+                                                <strong>Analysis:</strong> {{
+                                                    imgDesc?.forencic_analysis || ''
+                                                }}
+                                            </p>
+
                                             <div v-if="imgDesc?.objects?.length">
                                                 <strong>Objects:</strong>
                                                 <div>
@@ -109,6 +123,7 @@
                                                     </ul>
                                                 </div>
                                             </div>
+
                                         </div>
                                     </div>
                                 </div>

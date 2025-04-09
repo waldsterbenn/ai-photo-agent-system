@@ -8,9 +8,11 @@ class ImageDescription(BaseModel):
     filename: str
     summary: str
     scene: str
-    setting: Literal['Indoor', 'Outdoor', 'Portrait', 'Landscape', 'Other']
+    setting: str
+    forencic_analysis: str
     text_content: str
     objects: list[ImageDetectedObject]
+    image_rank: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
     delete: bool
     delete_reason: str
-    image_rank: Literal[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+    keep_reason: str

@@ -7,6 +7,7 @@ from infrence_provider.infrence_provider import InferenceProvider
 class ImageAnalystAgent():
 
     def __init__(self, instruction: AgentInstruction, image: ImageCarrier, infrence: InferenceProvider):
+
         self.instruction = instruction
         self.imageData = image
         self.tools = {}
@@ -14,8 +15,10 @@ class ImageAnalystAgent():
 
     def execute(self) -> ImageDescription:
         print("Analysing image")
-
-        message = self.inference.infer(prompt=self.instruction.prompt,
+        prompt = str.join('\n', [self.instruction.prompt,
+                                 "If any of these criteria are met, the image should be marked for deletion:",
+                                 self.instruction.criteria])
+        message = self.inference.infer(prompt=prompt,
                                        image=self.imageData.thumbnail_base64,
                                        format=ImageDescription.model_json_schema(),
                                        temperature=0.0

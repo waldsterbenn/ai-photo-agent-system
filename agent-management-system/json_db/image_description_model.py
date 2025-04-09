@@ -16,3 +16,5 @@ class ImageDescriptionModel(BaseModel):
     delete: Optional[bool]
     delete_reason: Optional[str]
     image_rank: Optional[int]
+    keep_reason: Optional[str]
+    forencic_analysis: Optional[str]

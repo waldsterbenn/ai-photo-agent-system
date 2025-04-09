@@ -30,7 +30,7 @@ class AgentManager:
             Provide the agent with instructional prompt.
             
             Now create a plan to solve this task.
-            The plan should contain instructions for each agent, based on the 'Prompt template' and 'Deletion criteria'.
+            The plan should contain instructions for each agent, based on the 'Prompt template' and must contain the 'Deletion criteria'.
 
             ---
 
@@ -54,6 +54,7 @@ class AgentManager:
         plan = Plan.model_validate_json(response)
 
         for agentInstruction in plan.agentPrompts:
+
             image = list(
                 filter(lambda x: (x.filename == agentInstruction.filename), image_carriers))[0]
             self.agents.append(ImageAnalystAgent(
@@ -78,5 +79,4 @@ class AgentManager:
 
         dict_descriptions = [desc.dict() for desc in imageDescriptions]
         json_string = json.dumps(dict_descriptions)
-        # print(json_string)
         return json_string
