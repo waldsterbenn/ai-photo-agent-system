@@ -47,13 +47,6 @@ services:
       - VITE_APP_BACKEND_URL=http://localhost:5000
     depends_on:
       - backend
-    develop:
-      watch:
-        - action: sync
-          path: ./src
-          target: /app/src
-        - action: rebuild
-          path: package.json
 
   ollama:
     image: ollama/ollama:latest
