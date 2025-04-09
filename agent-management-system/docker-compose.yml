@@ -4,9 +4,7 @@ services:
       context: ./ai_agents
     ports:
       - "6000:6000"
-      - 5678:5678
     environment:
-      - FLASK_ENV=development
       - FLASK_APP=app.py
       - FLASK_RUN_PORT=6000
       - ACTIVE_PROVIDER_TYPE=groq
