@@ -20,6 +20,7 @@ class AgentManager:
         self.inference = InferenceProviderFactory().create_provider()
         self.agents: list[ImageAnalystAgent] = []
         self.tools = {}
+        self.llm_temp = 0.2
 
     def plan_task(self, taskPrompt: str, criteria: List[str], image_carriers: List[ImageCarrier]) -> Plan:
         print("Planning task")
@@ -58,7 +59,7 @@ class AgentManager:
             image = list(
                 filter(lambda x: (x.filename == agentInstruction.filename), image_carriers))[0]
             self.agents.append(ImageAnalystAgent(
-                agentInstruction, image, self.inference))
+                agentInstruction, image, self.inference, self.llm_temp))
         return plan
 
     def execute_task(self) -> list:

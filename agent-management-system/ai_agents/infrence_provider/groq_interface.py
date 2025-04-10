@@ -34,12 +34,12 @@ class GroqInterface(InferenceProvider):
 
     def infer(self, prompt: str, image: str = None, format: str = None, temperature: float = 0.0) -> str:
         content = []
-
+        prettyFormat = json.dumps(format, indent=2)
         # Only add text content if prompt is provided.
         if prompt:
             text = prompt
             if format:
-                text += f" The JSON object must use the schema: {json.dumps(format, indent=2)}."
+                text += f" The return object must use this JSON schema: {prettyFormat}."
             content.append({
                 "type": "text",
                 "text": text

@@ -27,7 +27,6 @@ def home():
 @app.route('/status', methods=['GET'])
 def status():
     response = requests.get(f"{agent_manager_url}/status")
-    # response.raise_for_status()
     return response.json()
 
 
@@ -98,7 +97,6 @@ def create_image_description():
 
     # Add the file URI and filename to the description data
     description_data["image_uri"] = file_uri
-    # description_data["filename"] = file.filename
 
     # Post the complete ImageDescription to json_db
     create_resp = requests.post(
@@ -143,7 +141,6 @@ def delete_image_descriptions():
     """
     data = request.get_json()
     ids = data.get("ids")
-    ids = data.get("ids")
     if not ids:
         return jsonify({"error": "No IDs provided"}), 400
 
@@ -156,10 +153,3 @@ def delete_image_descriptions():
             return jsonify({"error": "Image description deletion failed", "details": delete_resp.text}), 500
 
     return jsonify(delete_resp.json()), 200
-
-
-# if __name__ == '__main__':
-#     print("Starting server...")
-#     print("Starting server...")
-
-#     app.run(host='0.0.0.0', port=5000, debug=True)

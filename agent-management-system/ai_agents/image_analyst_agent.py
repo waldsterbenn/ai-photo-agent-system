@@ -6,8 +6,8 @@ from infrence_provider.infrence_provider import InferenceProvider
 
 class ImageAnalystAgent():
 
-    def __init__(self, instruction: AgentInstruction, image: ImageCarrier, infrence: InferenceProvider):
-
+    def __init__(self, instruction: AgentInstruction, image: ImageCarrier, infrence: InferenceProvider, llm_temp: float = 0.0):
+        self.llm_temp = llm_temp
         self.instruction = instruction
         self.imageData = image
         self.tools = {}
@@ -21,7 +21,7 @@ class ImageAnalystAgent():
         message = self.inference.infer(prompt=prompt,
                                        image=self.imageData.thumbnail_base64,
                                        format=ImageDescription.model_json_schema(),
-                                       temperature=0.0
+                                       temperature=self.llm_temp
                                        )
 
         # Convert received content to the schema

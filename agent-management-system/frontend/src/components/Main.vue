@@ -124,6 +124,12 @@
                                                 </div>
                                             </div>
 
+                                            <p v-if="imgDesc?.quality_criteria" class="card-text">
+                                                <strong>Quality Checks:</strong> {{
+                                                    imgDesc?.quality_criteria || ''
+                                                }}
+                                            </p>
+
                                         </div>
                                     </div>
                                 </div>
