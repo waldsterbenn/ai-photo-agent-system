@@ -299,7 +299,8 @@ function getBrowserLocale() {
 
             <div v-if="imageDescriptions.length > 0" :class="`row row-cols-${columnsCount} g-3`">
                 <div class="col" v-for="imgDesc in imageDescriptions" :key="imgDesc.filename">
-                    <div class="card h-100 text-start">
+                    <div class="card h-100 text-start position-relative">
+
                         <div class="position-relative">
                             <img :src="getImageURL(imgDesc.thumbnail_base64)" class="card-img-top img-thumbnail"
                                 alt="Image">
@@ -310,6 +311,11 @@ function getBrowserLocale() {
                                 </div>
                             </div>
                         </div>
+                        <button @click.stop="imgDesc.delete = !imgDesc.delete"
+                            class="btn btn-sm btn-outline-secondary position-absolute top-0 end-0 m-2"
+                            title="Toggle delete">
+                            <i class="bi bi-trash"></i>
+                        </button>
                         <div v-if="!!imgDesc.scene" class="card-body">
                             <div class="card-title d-flex justify-content-between align-items-center">
                                 {{ imgDesc.filename }}
