@@ -49,7 +49,7 @@ watch(selectedPromptId, (selectedId: number) => {
 
 const duplicates = ref<ImageDescriptionViewModel[]>([]);
 const hasDuplicates = computed(() => {
-    return findDuplicates(imageDescriptions.value).length > 0;
+    return (findDuplicates(imageDescriptions.value)).length > 0;
 });
 
 // Get existing ImageDescriptions from backend and set them to the imageDescriptions ref.
@@ -274,9 +274,9 @@ function findDuplicates(imgDcs: ImageDescriptionViewModel[]) {
 </script>
 
 <template>
-    <div class="container-fluid d-flex flex-column h-100">
+    <div class="container-fluid d-flex flex-column h-100 bg-secondary-subtle">
         <!-- Toolbar -->
-        <div class="toolbar d-flex p-2 bg-light sticky-top hstack gap-3">
+        <div class="toolbar d-flex p-2 bg-secondary-subtle sticky-top hstack gap-3">
             <!-- Hidden File Input -->
             <input type="file" accept="image/*" multiple ref="imageInput" style="display:none"
                 @change="handleImageUpload" />
@@ -307,7 +307,7 @@ function findDuplicates(imgDcs: ImageDescriptionViewModel[]) {
         </div>
 
 
-        <div class="content flex-grow-1 p-2">
+        <div class="content flex-grow-1 p-2 bg-secondary">
 
             <div v-if="hasDuplicates">
                 <div v-for="cluster in findDuplicates(imageDescriptions)" :key="cluster.time" class="row">

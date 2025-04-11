@@ -1,6 +1,6 @@
 <template>
     <div id="app" class="container">
-        <nav class="navbar navbar-expand bg-light mb-2">
+        <nav class="navbar navbar-expand border mb-2">
             <div class="container-fluid">
                 <a class="navbar-brand" href="#">Photo album cleaner</a>
                 <div class="collapse navbar-collapse">
