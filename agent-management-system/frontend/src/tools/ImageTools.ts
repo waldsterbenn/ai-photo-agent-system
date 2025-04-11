@@ -2,7 +2,7 @@ import axios from 'axios';
 
 export class ImageTools {
     backendCompressUrl: string;
-    constructor(backendCompressUrl) {
+    constructor(backendCompressUrl:string) {
         this.backendCompressUrl = backendCompressUrl;
      }
     
