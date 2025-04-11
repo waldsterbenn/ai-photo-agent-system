@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ValidationError
+from pydantic import BaseModel
 from typing import Any, Dict, List, Optional
 
 
@@ -24,7 +24,6 @@ class ImageDescriptionModel(BaseModel):
     id: Optional[int] = None
     filename: str
     image_uri: str
-    thumbnail_base64: str
     summary: Optional[str]
     scene: Optional[str]
     setting: Optional[str]
@@ -36,3 +35,5 @@ class ImageDescriptionModel(BaseModel):
     keep_reason: Optional[str]
     forencic_analysis: Optional[str]
     quality_criteria: Optional[QualityCriteria]
+    metadata: Optional[Dict[str, Any]]
+    thumbnail_base64: str

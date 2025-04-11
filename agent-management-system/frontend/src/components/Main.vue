@@ -16,6 +16,10 @@
                 <i class="bi bi-image"></i> Select Photos
             </button>
 
+            <button @click="" class="btn btn-secondary p-2" title="Sort">
+                <i class="bi bi-sort-alpha-down"></i> Sort
+            </button>
+
             <div class="vr"></div>
 
             <!-- Button to delete photos -->
@@ -130,10 +134,18 @@
                                                 }}
                                             </p>
 
-                                            <p v-if="imgDesc?.metadata" class="card-text">
-                                                <strong>Img Metadata:</strong> {{
-                                                    imgDesc?.metadata || ''
+                                            <p v-if="imgDesc?.metadata && Object.keys(imgDesc.metadata).length > 0"
+                                                class="card-text">
+                                                {{
+                                                    imgDesc?.metadata["exif"]["0th"]["Make"] || ''
                                                 }}
+                                            <div class="vr"></div>
+                                            {{
+                                                new Date(imgDesc?.metadata["exif"]["0th"]["DateTime"]
+                                                    .replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3')
+                                                    .replace(' ', 'T')).toLocaleString(getBrowserLocale()) || ''
+                                            }}
+                                            <!-- {{ imgDesc?.metadata }} -->
                                             </p>
 
                                         </div>
@@ -144,7 +156,6 @@
                         <div v-else class="card-body">
                             <div class="card-title d-flex justify-content-between align-items-center">
                                 <div class="vstack">
-                                    <div class="">{{ imgDesc.filename }}</div>
                                     <div class="hstack">
                                         <div class="p-2">
                                             <button @click="sendMessage" class="btn btn-outline-primary"
@@ -166,11 +177,24 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <p v-if="imgDesc?.metadata || true" class="card-text">
-                                        <strong>Img Metadata:</strong> {{
-                                            imgDesc?.metadata || ''
-                                        }}
-                                    </p>
+                                    <div class="card-text">
+                                        <div class="">{{ imgDesc.filename }}</div>
+                                        <div v-if="imgDesc?.metadata && Object.keys(imgDesc.metadata).length > 0"
+                                            class="card-text">
+                                            {{
+                                                new Date(imgDesc?.metadata["exif"]["0th"]["DateTime"]
+                                                    .replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3')
+                                                    .replace(' ', 'T')).toLocaleString(getBrowserLocale()) || ''
+                                            }}
+                                            <div class="vr"></div>
+                                            {{
+                                                imgDesc?.metadata["exif"]["0th"]["Make"] || ''
+                                            }}
+
+                                            <!-- {{ imgDesc?.metadata }} -->
+                                        </div>
+
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -235,7 +259,7 @@ import { ImageDescriptionDto } from '@/data/ImageDescriptionDto';
 import { ImageDescriptionViewModel } from '@/data/ImageDescriptionViewModel';
 import { ImageTools } from '@/tools/ImageTools';
 import Modal from 'bootstrap/js/dist/modal';
-import { computed, onMounted, ref, watch } from 'vue';
+import { computed, onMounted, ref, toRaw, watch } from 'vue';
 
 const statusUrl = computed(() => `${backendUrl}/status`);
 const processUrl = computed(() => `${backendUrl}/processtask`);
@@ -251,7 +275,7 @@ const maxFileSizeBytes = 2 * 1024 * 1024; // MB
 
 // Import prompt options and set the default prompt
 const promptsOptions = ref(promptsData.prompts);
-const selectedPromptId = ref(promptsOptions.value[0].id);
+const selectedPromptId = ref<number>(promptsOptions.value[0].id);
 const taskPrompt = promptsOptions.value[0].prompt;
 const prompt = ref(taskPrompt);
 
@@ -265,8 +289,8 @@ const criteria = ref(
 );
 
 // Update the main prompt when a new prompt is selected.
-watch(selectedPromptId, (newVal) => {
-    const selected = promptsOptions.value.find(p => p.id === newVal);
+watch(selectedPromptId, (selectedId: number) => {
+    const selected = promptsOptions.value.find((p: { id: number; }) => p.id === selectedId);
     if (selected) {
         prompt.value = selected.prompt;
     }
@@ -375,15 +399,17 @@ async function sendMessage(e: Event) {
     try {
         const taskId = Date.now();
 
-        const filteredImages = imageDescriptions.value.filter(image => !image.summary)
-            .map(x => ({ filename: x.filename, thumbnail_base64: x.thumbnail_base64, metadata: {} }));
+        // Crude way of checking if the image is being processed or not. TODO: Improve this.
+        const filteredImages = imageDescriptions.value
+            .map((imgDesc: ImageDescriptionViewModel) => toRaw(imgDesc))
+            .filter((imgDesc: ImageDescriptionViewModel) => !imgDesc.summary);
 
         if (filteredImages.length === 0) {
             loading.value = false;
             return;
         }
         // Only include criteria that are selected
-        const selectedCriteria = criteria.value.filter(c => c.selected).map(c => c.text);
+        const selectedCriteria = criteria.value.filter((c: { selected: boolean; }) => c.selected).map((c: { text: string; }) => c.text);
         const payload = {
             taskId: taskId,
             taskPrompt: prompt.value.join('\n'),
@@ -395,16 +421,15 @@ async function sendMessage(e: Event) {
         if (data.status === "success" && taskId === data.taskId) {
             const returnData = JSON.parse(data.result);
             for (const newDesc of returnData) {
-                const existingIndex = imageDescriptions.value.findIndex((desc) => desc.filename === newDesc.filename);
+                const existingIndex = imageDescriptions.value.findIndex((imgDesc: ImageDescriptionViewModel) => imgDesc.filename === newDesc.filename);
                 if (existingIndex !== -1) {
                     imageDescriptions.value[existingIndex] = { ...imageDescriptions.value[existingIndex], ...newDesc };
                 } else {
-                    throw Error("Image index not found. This shouldnt happen since images are always created before processing");
+                    throw Error("ViewModel index not found. This shouldnt happen since images are always created before processing");
                 }
 
                 try {
-                    const existing = imageDescriptions.value[existingIndex];
-                    const imgDescDto = Object.assign(new ImageDescriptionDto(), existing);
+                    const imgDescDto = Object.assign(new ImageDescriptionDto(), imageDescriptions.value[existingIndex]);
                     await axios.put(`${backendUrl}/update-image-description`, { description: imgDescDto }, {
                         headers: { "Content-Type": "application/json" }
                     });
@@ -427,16 +452,16 @@ async function deleteSelected(params: Event) {
     loading.value = true;
     error.value = "";
     try {
-        const selectedImages = imageDescriptions.value.filter(imgDesc => imgDesc.delete);
+        const selectedImages = imageDescriptions.value.filter((imgDesc: { delete: any; }) => imgDesc.delete);
         if (selectedImages.length === 0) return;
 
         const payload = {
             taskId: Date.now(),
-            ids: selectedImages.map(x => ({ id: x.id }))
+            ids: selectedImages.map((x: { id: any; }) => ({ id: x.id }))
         };
         const response = await axios.delete(deleteUrl.value, { data: payload });
         if (response.status === 200) {
-            imageDescriptions.value = imageDescriptions.value.filter(image => !image.delete);
+            imageDescriptions.value = imageDescriptions.value.filter((image: { delete: any; }) => !image.delete);
         } else {
             error.value = data.error;
         }
@@ -471,6 +496,16 @@ function openAnalysisModal() {
         const modal = new Modal(modalEl);
         modal.show();
     }
+}
+
+function getBrowserLocale() {
+    let lang;
+    if (navigator.languages && navigator.languages.length) {
+        lang = navigator.languages;
+    }
+    lang = navigator.language;
+    return "da-DK"; //TODO make this selectable from browsers languages or custom list
+
 }
 
 </script>
