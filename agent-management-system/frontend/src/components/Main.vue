@@ -7,6 +7,7 @@ import * as promptsData from '@/config/prompts.json';
 import { ImageDescriptionDto } from '@/data/ImageDescriptionDto';
 import { ImageDescriptionViewModel } from '@/data/ImageDescriptionViewModel';
 import { ImageTools } from '@/tools/ImageTools';
+import { DuplicateFinder } from '@/tools/DuplicateFinder';
 import Modal from 'bootstrap/js/dist/modal';
 import { computed, onMounted, ref, toRaw, watch } from 'vue';
 
@@ -21,6 +22,7 @@ const imageInput = ref<HTMLInputElement | null>(null);
 const columnsCount = ref(3);
 
 const maxFileSizeBytes = 2 * 1024 * 1024; // MB
+const duplicateTimeThresholdMs = 10 * 1000; // milliseconds
 
 // Import prompt options and set the default prompt
 const promptsOptions = ref(promptsData.prompts);
@@ -43,6 +45,11 @@ watch(selectedPromptId, (selectedId: number) => {
     if (selected) {
         prompt.value = selected.prompt;
     }
+});
+
+const duplicates = ref<ImageDescriptionViewModel[]>([]);
+const hasDuplicates = computed(() => {
+    return findDuplicates(imageDescriptions.value).length > 0;
 });
 
 // Get existing ImageDescriptions from backend and set them to the imageDescriptions ref.
@@ -257,6 +264,13 @@ function getBrowserLocale() {
 
 }
 
+function findDuplicates(imgDcs: ImageDescriptionViewModel[]) {
+    if (!imgDcs || imgDcs.length === 0) return [];
+    const clusters = new DuplicateFinder(duplicateTimeThresholdMs).findDuplicates(imgDcs);
+
+    return clusters;
+}
+
 </script>
 
 <template>
@@ -277,7 +291,7 @@ function getBrowserLocale() {
                 <i class="bi bi-image"></i> Select Photos
             </button>
 
-            <button @click="" class="btn btn-secondary p-2" title="Sort">
+            <button @click="" class="btn btn-secondary p-2 disabled" title="Sort">
                 <i class="bi bi-sort-alpha-down"></i> Sort
             </button>
 
@@ -292,14 +306,55 @@ function getBrowserLocale() {
             <button @click="sendMessage" class="btn btn-primary p-2" :disabled="loading">Go</button>
         </div>
 
+
+        <div class="content flex-grow-1 p-2">
+
+            <div v-if="hasDuplicates">
+                <div v-for="cluster in findDuplicates(imageDescriptions)" :key="cluster.time" class="row">
+                    <div class="col m-2">
+                        <div class="card text-center">
+                            <div class="card-header">
+                                Duplicated images ({{ new Date(cluster.time).toLocaleString(getBrowserLocale()) }})
+                            </div>
+                            <div class="hstack">
+                                <div class="m-2" v-for="imgDesc in cluster.images">
+                                    <div :class="`card ${imgDesc.delete ? 'border border-danger' : ''}`">
+                                        <img :src="getImageURL(imgDesc.thumbnail_base64)"
+                                            class="card-img-top img-thumbnail" alt="Image">
+
+                                        <button @click.stop="imgDesc.delete = !imgDesc.delete"
+                                            class="btn btn-sm btn-primary m-2" title="Toggle delete">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                        <div class="card-body">
+                                            <p class="card-text">{{ imgDesc.filename }}</p>
+
+
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+
+            </div>
+
+        </div>
+
+        <div class="hr"></div>
         <!-- Content area -->
+
         <div class="content flex-grow-1 p-2">
             <p v-if="loading">Working...</p>
             <p v-else-if="error">{{ error }}</p>
 
+
             <div v-if="imageDescriptions.length > 0" :class="`row row-cols-${columnsCount} g-3`">
                 <div class="col" v-for="imgDesc in imageDescriptions" :key="imgDesc.filename">
-                    <div class="card h-100 text-start position-relative">
+                    <div
+                        :class="`card h-100 text-center position-relative ${imgDesc.delete ? 'border border-danger' : ''}`">
 
                         <div class="position-relative">
                             <img :src="getImageURL(imgDesc.thumbnail_base64)" class="card-img-top img-thumbnail"
