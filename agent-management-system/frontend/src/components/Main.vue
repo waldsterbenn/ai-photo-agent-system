@@ -237,9 +237,11 @@ function findDuplicates() {
                 <i class="bi bi-image"></i> Select Photos
             </button>
 
-            <button @click="findDuplicates" class="btn btn-secondary p-2" title="Find Duplicates">
-                <i class="bi bi-copy"></i> Duplicates
-            </button>
+            <input type="checkbox" class="btn-check" id="btn-check-duplicates" autocomplete="off"
+                v-model="searchForDuplicates" @click="findDuplicates" />
+            <label class="btn btn-secondary p-2" for="btn-check-duplicates">
+                Duplicates <i class="bi bi-copy"></i>
+            </label>
 
             <button @click="" class="btn btn-secondary p-2 disabled" title="Sort">
                 <i class="bi bi-sort-alpha-down"></i> Sort
