@@ -5,7 +5,7 @@ export class ImageDetectedObject {
     attributes: string;
 }
     
-export class ImageDescription {
+export class ImageDescriptionViewModel {
     filename: string;
     thumbnail_base64: string;
     summary: string;
@@ -19,6 +19,7 @@ export class ImageDescription {
     keep_reason: string;
     forencic_analysis: string;
     quality_criteria: QualityCriteria;
+    metadata: any;
 }
 
 export class QualityCriteria {

@@ -130,6 +130,12 @@
                                                 }}
                                             </p>
 
+                                            <p v-if="imgDesc?.metadata" class="card-text">
+                                                <strong>Img Metadata:</strong> {{
+                                                    imgDesc?.metadata || ''
+                                                }}
+                                            </p>
+
                                         </div>
                                     </div>
                                 </div>
@@ -160,6 +166,11 @@
                                             </div>
                                         </div>
                                     </div>
+                                    <p v-if="imgDesc?.metadata || true" class="card-text">
+                                        <strong>Img Metadata:</strong> {{
+                                            imgDesc?.metadata || ''
+                                        }}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -222,16 +233,20 @@ import { computed, onMounted, ref, watch } from 'vue';
 import { backendUrl } from '../config/backend_conf';
 import criteriaData from '../config/criteria.json';
 import promptsData from '../config/prompts.json';
-import { ImageDescription } from '../data/ImageDescription';
+import { ImageDescriptionViewModel } from '../data/ImageDescription';
+import { ImageTools } from '../tools/ImageTools';
 
 const statusUrl = computed(() => `${backendUrl}/status`);
 const processUrl = computed(() => `${backendUrl}/processtask`);
 const deleteUrl = computed(() => `${backendUrl}/delete-image-descriptions`);
-const imageDescriptions = ref<ImageDescription[]>([]); // Ensure descriptions include a "filename" property if available.
+const compressImgUrl = computed(() => `${backendUrl}/compress-image`);
+const imageDescriptions = ref<ImageDescriptionViewModel[]>([]); // Ensure descriptions include a "filename" property if available.
 const loading = ref(false);
 const error = ref('');
 const imageInput = ref<HTMLInputElement | null>(null);
 const columnsCount = ref(3);
+
+const maxFileSizeBytes = 2 * 1024 * 1024; // MB
 
 // Import prompt options and set the default prompt
 const promptsOptions = ref(promptsData.prompts);
@@ -264,7 +279,7 @@ async function fetchImageDescriptions() {
         if (response.data.length === 0) {
             return;
         }
-        imageDescriptions.value = response.data.map((desc: any) => Object.assign(new ImageDescription(), desc));
+        imageDescriptions.value = response.data.map((desc: any) => Object.assign(new ImageDescriptionViewModel(), desc));
 
     } catch (err) {
         console.error("Error fetching image descriptions:", err);
@@ -319,14 +334,20 @@ async function handleImageUpload(event: Event) {
     for (const file of Array.from(target.files)) {
         try {
 
+            const tool = new ImageTools(compressImgUrl.value);
+            const compressionResult = await tool.compressImage(file, maxFileSizeBytes);
+            if (compressionResult.compressedSize > maxFileSizeBytes) {
+                throw new Error("Image compression failed, its too big to analyse.");
+            }
             // Scale image for local preview
-            const dataUrl = await scaleImageFile(file, 0.5);
-            const base64Data = dataUrl.split(',')[1]; // Remove base64 prefix
+            // const dataUrl = await scaleImageFile(file, 0.5);
+            //const base64Data = dataUrl.split(',')[1]; // Remove base64 prefix
 
             // Prepare description data (here, only the filename is provided)
-            const descriptionPayload = new ImageDescription();
+            const descriptionPayload = new ImageDescriptionViewModel();
             descriptionPayload.filename = file.name;
-            descriptionPayload.thumbnail_base64 = base64Data;
+            descriptionPayload.thumbnail_base64 = compressionResult.compressImageBase64;
+            descriptionPayload.metadata = compressionResult.metadata;
 
             // Prepare multipart/form-data
             const formData = new FormData();
@@ -351,7 +372,7 @@ async function handleImageUpload(event: Event) {
     target.value = "";
 }
 
-const sendMessage = async (e: Event) => {
+async function sendMessage(e: Event) {
     loading.value = true;
     error.value = "";
     try {
@@ -402,7 +423,7 @@ const sendMessage = async (e: Event) => {
     } finally {
         loading.value = false;
     }
-};
+}
 
 async function deleteSelected(params: Event) {
     loading.value = true;

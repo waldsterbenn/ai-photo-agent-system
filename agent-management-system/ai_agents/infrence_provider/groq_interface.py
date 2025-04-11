@@ -50,7 +50,7 @@ class GroqInterface(InferenceProvider):
             content.append({
                 "type": "image_url",
                 "image_url": {
-                    "url": f"data:image/jpeg;base64,{image}"
+                    "url": f"{self.ensure_base64_str(image)}"
                 }
             })
 
@@ -66,6 +66,12 @@ class GroqInterface(InferenceProvider):
             # top_p=1,
         )
         return response.choices[0].message.content or ""
+
+    def ensure_base64_str(self, base64str) -> str:
+        """
+        Ensure the image string is in base64 format.
+        """
+        return base64str if base64str.startswith("data:image/jpeg;base64,") else f"data:image/jpeg;base64,{base64str}"
 
     def get_provider_name(self) -> str:
         return "Groq"

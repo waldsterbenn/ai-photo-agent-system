@@ -1,7 +1,8 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, make_response
 from flask_cors import CORS  # add this import
 import requests
 import json
+from image_tools import ImageTool
 
 app = Flask(__name__)
 CORS(app)  # enable CORS for all routes
@@ -153,3 +154,45 @@ def delete_image_descriptions():
             return jsonify({"error": "Image description deletion failed", "details": delete_resp.text}), 500
 
     return jsonify(delete_resp.json()), 200
+
+
+@app.route('/compress-image', methods=['POST'])
+def compress_image_endpoint():
+    if 'image' not in request.files:
+        return jsonify({'error': 'No image provided'}), 400
+
+    try:
+        image_file = request.files['image']
+        target_size_mb = float(request.form.get('targetSizeMB', 2.0))
+
+        # Read image data
+        image_data = image_file.read()
+
+        image_tool = ImageTool()
+        # Extract metadata from original image
+        metadata = image_tool.extract_image_metadata(image_data)
+
+        # Compress image
+        compressed_data = image_tool.compress_image_to_target_size(
+            image_data, target_size_mb)
+
+        # Calculate sizes
+        original_size_mb = len(image_data) / (1024 * 1024)
+        compressed_size_mb = len(compressed_data) / (1024 * 1024)
+
+        # Create response with metadata
+        response = make_response(compressed_data)
+        response.headers.set('Content-Type', 'image/jpeg')
+        response.headers.set('Content-Disposition',
+                             f'attachment; filename=compressed.jpg')
+        response.headers.set('X-Image-Metadata', json.dumps(metadata))
+        response.headers.set('X-Original-Size', f"{original_size_mb:.2f}")
+        response.headers.set('X-Compressed-Size', f"{compressed_size_mb:.2f}")
+
+        response.headers.set('Access-Control-Expose-Headers',
+                             'X-Image-Metadata, X-Original-Size, X-Compressed-Size')
+
+        return response
+
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
