@@ -47,6 +47,9 @@ const duplicateClusters = computed(() => {
             </div>
         </div>
     </div>
+    <div v-else class="alert" role="alert">
+        No duplicate images found.
+    </div>
 </template>
 
 <style scoped lang="css">

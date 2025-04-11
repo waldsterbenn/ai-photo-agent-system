@@ -1,5 +1,5 @@
 {
-  "name": "Photo-Roll",
+  "name": "Photo-Album",
   "version": "0.0.1",
   "description": "Helps clean you'r photo album.",
   "main": "src/main.ts",
