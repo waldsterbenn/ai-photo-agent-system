@@ -75,19 +75,19 @@
                                         :aria-labelledby="`headingDetails-${imgDesc.filename}`">
                                         <div class="accordion-body">
 
-                                            <p v-if="imgDesc?.metadata && Object.keys(imgDesc.metadata).length > 0"
+                                            <div v-if="imgDesc?.metadata && Object.keys(imgDesc.metadata).length > 0"
                                                 class="card-text">
                                                 {{
                                                     imgDesc?.metadata["exif"]["0th"]["Make"] || ''
                                                 }}
-                                            <div class="vr"></div>
-                                            {{
-                                                new Date(imgDesc?.metadata["exif"]["0th"]["DateTime"]
-                                                    .replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3')
-                                                    .replace(' ', 'T')).toLocaleString(getBrowserLocale()) || ''
-                                            }}
-                                            <!-- {{ imgDesc?.metadata }} -->
-                                            </p>
+                                                <div class="vr"></div>
+                                                {{
+                                                    new Date(imgDesc?.metadata["exif"]["0th"]["DateTime"]
+                                                        .replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3')
+                                                        .replace(' ', 'T')).toLocaleString(getBrowserLocale()) || ''
+                                                }}
+                                                <!-- {{ imgDesc?.metadata }} -->
+                                            </div>
 
                                             <p class="card-text">
                                                 <strong>The Photo:</strong>
