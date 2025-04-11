@@ -21,6 +21,7 @@ class AgentManager:
         self.agents: list[ImageAnalystAgent] = []
         self.tools = {}
         self.llm_temp = 0.2
+        print("AgentManager constructed")
 
     def plan_task(self, taskPrompt: str, criteria: List[str], image_carriers: List[ImageCarrier]) -> Plan:
         print("Planning task")
@@ -58,8 +59,9 @@ class AgentManager:
 
             image = list(
                 filter(lambda x: (x.filename == agentInstruction.filename), image_carriers))[0]
-            self.agents.append(ImageAnalystAgent(
-                agentInstruction, image, self.inference, self.llm_temp))
+            if image is not None:
+                self.agents.append(ImageAnalystAgent(
+                    agentInstruction, image, self.inference, self.llm_temp))
         return plan
 
     def execute_task(self) -> list:
@@ -72,7 +74,7 @@ class AgentManager:
         Returns:
             dict: Result of the task execution
         """
-        print("Executing agents")
+        print(f"Executing {len(self.agents)} agents")
         imageDescriptions = []
         for agent in self.agents:
             desc: ImageDescription = agent.execute()
