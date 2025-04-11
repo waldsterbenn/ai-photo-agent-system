@@ -1,5 +1,5 @@
 
-export class ImageDetectedObject {
+export class ImageDetectedObjectViewModel {
     name: string
     confidence: number;
     attributes: string;
@@ -12,17 +12,17 @@ export class ImageDescriptionViewModel {
     scene: string;
     setting: string;
     text_content: string;
-    objects: ImageDetectedObject[];
+    objects: ImageDetectedObjectViewModel[];
     delete: boolean;
     delete_reason: string;
     image_rank: number;
     keep_reason: string;
     forencic_analysis: string;
-    quality_criteria: QualityCriteria;
+    quality_criteria: QualityCriteriaViewModel;
     metadata: any;
 }
 
-export class QualityCriteria {
+export class QualityCriteriaViewModel {
     low_quality: boolean;
     obscured_or_blurred: boolean;
     poor_lighting: boolean;

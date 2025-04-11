@@ -228,13 +228,14 @@
 <script setup lang="ts">
 import axios from 'axios';
 // Import Bootstrap Modal from bootstrap's JS distribution
+import { backendUrl } from '@/config/backend_conf';
+import * as criteriaData from '@/config/criteria.json';
+import * as promptsData from '@/config/prompts.json';
+import { ImageDescriptionDto } from '@/data/ImageDescriptionDto';
+import { ImageDescriptionViewModel } from '@/data/ImageDescriptionViewModel';
+import { ImageTools } from '@/tools/ImageTools';
 import Modal from 'bootstrap/js/dist/modal';
 import { computed, onMounted, ref, watch } from 'vue';
-import { backendUrl } from '../config/backend_conf';
-import criteriaData from '../config/criteria.json';
-import promptsData from '../config/prompts.json';
-import { ImageDescriptionViewModel } from '../data/ImageDescription';
-import { ImageTools } from '../tools/ImageTools';
 
 const statusUrl = computed(() => `${backendUrl}/status`);
 const processUrl = computed(() => `${backendUrl}/processtask`);
@@ -339,12 +340,8 @@ async function handleImageUpload(event: Event) {
             if (compressionResult.compressedSize > maxFileSizeBytes) {
                 throw new Error("Image compression failed, its too big to analyse.");
             }
-            // Scale image for local preview
-            // const dataUrl = await scaleImageFile(file, 0.5);
-            //const base64Data = dataUrl.split(',')[1]; // Remove base64 prefix
 
-            // Prepare description data (here, only the filename is provided)
-            const descriptionPayload = new ImageDescriptionViewModel();
+            const descriptionPayload = new ImageDescriptionDto();
             descriptionPayload.filename = file.name;
             descriptionPayload.thumbnail_base64 = compressionResult.compressImageBase64;
             descriptionPayload.metadata = compressionResult.metadata;
