@@ -1,253 +1,3 @@
-<template>
-    <div class="container-fluid d-flex flex-column h-100">
-        <!-- Toolbar -->
-        <div class="toolbar d-flex p-2 bg-light sticky-top hstack gap-3">
-            <!-- Hidden File Input -->
-            <input type="file" accept="image/*" multiple ref="imageInput" style="display:none"
-                @change="handleImageUpload" />
-
-            <!-- Gear icon button to open analysis modal -->
-            <button @click="openAnalysisModal" class="btn btn-secondary-subtle p-2" title="Analysis Settings">
-                <i class="bi bi-gear"></i>
-            </button>
-
-            <!-- Button to trigger image picker -->
-            <button @click="triggerImagePicker" class="btn btn-secondary p-2 ms-auto" title="Upload a photo">
-                <i class="bi bi-image"></i> Select Photos
-            </button>
-
-            <button @click="" class="btn btn-secondary p-2" title="Sort">
-                <i class="bi bi-sort-alpha-down"></i> Sort
-            </button>
-
-            <div class="vr"></div>
-
-            <!-- Button to delete photos -->
-            <button @click="deleteSelected" class="btn btn-secondary p-2" title="Delete selected phots">
-                <i class="bi bi-trash"></i>
-            </button>
-
-            <!-- Send Message Button -->
-            <button @click="sendMessage" class="btn btn-primary p-2" :disabled="loading">Go</button>
-        </div>
-
-        <!-- Content area -->
-        <div class="content flex-grow-1 p-2">
-            <p v-if="loading">Working...</p>
-            <p v-else-if="error">{{ error }}</p>
-
-            <div v-if="imageDescriptions.length > 0" :class="`row row-cols-${columnsCount} g-3`">
-                <div class="col" v-for="imgDesc in imageDescriptions" :key="imgDesc.filename">
-                    <div class="card h-100 text-start">
-                        <div class="position-relative">
-                            <img :src="getImageURL(imgDesc.thumbnail_base64)" class="card-img-top img-thumbnail"
-                                alt="Image">
-                            <!-- Each image shows its own spinner if the system is loading -->
-                            <div v-if="loading && !imgDesc.summary" class="spinner-overlay">
-                                <div class="spinner-border text-primary" role="status">
-                                    <span class="visually-hidden">Loading...</span>
-                                </div>
-                            </div>
-                        </div>
-                        <div v-if="!!imgDesc.scene" class="card-body">
-                            <div class="card-title d-flex justify-content-between align-items-center">
-                                {{ imgDesc.filename }}
-                                <div class="form-check form-switch">
-                                    <input class="form-check-input" type="checkbox" role="switch" value=""
-                                        :id="`flexCheckDefault-${imgDesc.filename}`" v-model="imgDesc.delete">
-                                    <label class="form-check-label" :for="`flexCheckDefault-${imgDesc.filename}`">
-                                        <i class="bi bi-trash"></i>
-                                    </label>
-                                </div>
-                            </div>
-                            <div class="accordion mt-3" :id="`accordionDetails-${imgDesc.filename}`">
-                                <div class="accordion-item">
-                                    <h2 class="accordion-header" :id="`headingDetails-${imgDesc.filename}`">
-                                        <button class="accordion-button collapsed" type="button"
-                                            data-bs-toggle="collapse"
-                                            :data-bs-target="`#collapseDetails-${imgDesc.filename}`"
-                                            aria-expanded="false"
-                                            :aria-controls="`collapseDetails-${imgDesc.filename}`">
-                                            Quality {{ imgDesc.image_rank }}/10
-                                        </button>
-                                    </h2>
-                                    <div :id="`collapseDetails-${imgDesc.filename}`" class="accordion-collapse collapse"
-                                        :aria-labelledby="`headingDetails-${imgDesc.filename}`">
-                                        <div class="accordion-body">
-
-                                            <div v-if="imgDesc?.metadata && Object.keys(imgDesc.metadata).length > 0"
-                                                class="card-text">
-                                                {{
-                                                    imgDesc?.metadata["exif"]["0th"]["Make"] || ''
-                                                }}
-                                                <div class="vr"></div>
-                                                {{
-                                                    new Date(imgDesc?.metadata["exif"]["0th"]["DateTime"]
-                                                        .replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3')
-                                                        .replace(' ', 'T')).toLocaleString(getBrowserLocale()) || ''
-                                                }}
-                                                <!-- {{ imgDesc?.metadata }} -->
-                                            </div>
-
-                                            <p class="card-text">
-                                                <strong>The Photo:</strong>
-                                                {{ imgDesc?.summary || '' }}
-                                            </p>
-
-                                            <p v-if="imgDesc?.delete_reason" class="card-text">
-                                                <strong>Delete Reason:</strong> {{
-                                                    imgDesc?.delete_reason || '' }}
-                                            </p>
-
-                                            <p v-if="imgDesc?.keep_reason" class="card-text">
-                                                <strong>Keep Reason:</strong> {{
-                                                    imgDesc?.keep_reason || ''
-                                                }}
-                                            </p>
-                                            <p v-if="imgDesc?.scene" class="card-text">
-                                                <strong>Scene:</strong> {{
-                                                    imgDesc?.scene || ''
-                                                }}
-                                            </p>
-                                            <p class="card-text">
-                                                <strong>Setting:</strong> {{
-                                                    imgDesc?.setting || ''
-                                                }}
-                                            </p>
-                                            <p v-if="imgDesc?.text_content" class="card-text">
-                                                <strong>Text Content:</strong> {{
-                                                    imgDesc?.text_content || ''
-                                                }}
-                                            </p>
-
-                                            <p v-if="imgDesc?.forencic_analysis" class="card-text">
-                                                <strong>Analysis:</strong> {{
-                                                    imgDesc?.forencic_analysis || ''
-                                                }}
-                                            </p>
-
-                                            <div v-if="imgDesc?.objects?.length">
-                                                <strong>Objects:</strong>
-                                                <div>
-                                                    <ul v-for="object in imgDesc.objects" :key="object.name"
-                                                        class="list-group">
-                                                        <li class="list-group-item d-flex align-items-start">
-                                                            <div class="ms-2 me-auto">
-                                                                <div class="fw-italic">{{ object.name }}
-                                                                </div>
-                                                                {{ object.attributes }}
-                                                            </div>
-                                                        </li>
-                                                    </ul>
-                                                </div>
-                                            </div>
-
-                                            <p v-if="imgDesc?.quality_criteria" class="card-text">
-                                                <strong>Quality Checks:</strong> {{
-                                                    imgDesc?.quality_criteria || ''
-                                                }}
-                                            </p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                        <div v-else class="card-body">
-                            <div class="card-title d-flex justify-content-between align-items-center">
-                                <div class="vstack">
-                                    <div class="hstack">
-                                        <div class="p-2">
-                                            <button @click="sendMessage" class="btn btn-outline-primary"
-                                                :disabled="loading">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
-                                            Analyse
-                                        </div>
-                                        <div class="p-2  ms-auto">
-                                            <div class="form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" role="switch" value=""
-                                                    :id="`flexCheckDefault-${imgDesc.filename}`"
-                                                    v-model="imgDesc.delete">
-                                                <label class="form-check-label"
-                                                    :for="`flexCheckDefault-${imgDesc.filename}`">
-                                                    <i class="bi bi-trash"></i>
-                                                </label>
-
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <div class="card-text">
-                                        <div class="">{{ imgDesc.filename }}</div>
-                                        <div v-if="imgDesc?.metadata && Object.keys(imgDesc.metadata).length > 0"
-                                            class="card-text">
-                                            {{
-                                                new Date(imgDesc?.metadata["exif"]["0th"]["DateTime"]
-                                                    .replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3')
-                                                    .replace(' ', 'T')).toLocaleString(getBrowserLocale()) || ''
-                                            }}
-                                            <div class="vr"></div>
-                                            {{
-                                                imgDesc?.metadata["exif"]["0th"]["Make"] || ''
-                                            }}
-
-                                            <!-- {{ imgDesc?.metadata }} -->
-                                        </div>
-
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- Analysis Modal -->
-    <div class="modal fade" id="analysisModal" tabindex="-1" aria-labelledby="analysisModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="analysisModalLabel">Configuration</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <h4>Profile</h4>
-                    <select class="form-select mb-3" v-model.number="selectedPromptId">
-                        <option v-for="p in promptsOptions" :key="p.id" :value="p.id">
-                            {{ p.name }}
-                        </option>
-                    </select>
-                    <h4 class="mt-3">Card Columns</h4>
-                    <select class="form-select mb-3" v-model.number="columnsCount">
-                        <option v-for="n in [1, 2, 3, 4, 5]" :key="n" :value="n">{{ n }}</option>
-                    </select>
-
-                    <h4>Prompt</h4>
-                    <ul class="">
-                        <li v-for="(pr, index) in prompt" :key="index">
-                            <div class="">{{ pr }}</div>
-                        </li>
-                    </ul>
-
-                    <h4>Deletion criteria</h4>
-                    <ul class="list-group m-2">
-                        <li v-for="(crit, index) in criteria" :key="index"
-                            class="list-group-item d-flex align-items-center">
-                            <input type="checkbox" v-model="crit.selected" class="form-check-input me-2"
-                                :id="`criteria-${index}`" />
-                            <label :for="`criteria-${index}`" class="mb-0">{{ crit.text }}</label>
-                        </li>
-                    </ul>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Ok</button>
-                </div>
-            </div>
-        </div>
-    </div>
-</template>
-
 <script setup lang="ts">
 import axios from 'axios';
 // Import Bootstrap Modal from bootstrap's JS distribution
@@ -509,7 +259,257 @@ function getBrowserLocale() {
 
 </script>
 
-<style scoped>
+<template>
+    <div class="container-fluid d-flex flex-column h-100">
+        <!-- Toolbar -->
+        <div class="toolbar d-flex p-2 bg-light sticky-top hstack gap-3">
+            <!-- Hidden File Input -->
+            <input type="file" accept="image/*" multiple ref="imageInput" style="display:none"
+                @change="handleImageUpload" />
+
+            <!-- Gear icon button to open analysis modal -->
+            <button @click="openAnalysisModal" class="btn btn-secondary-subtle p-2" title="Analysis Settings">
+                <i class="bi bi-gear"></i>
+            </button>
+
+            <!-- Button to trigger image picker -->
+            <button @click="triggerImagePicker" class="btn btn-secondary p-2 ms-auto" title="Upload a photo">
+                <i class="bi bi-image"></i> Select Photos
+            </button>
+
+            <button @click="" class="btn btn-secondary p-2" title="Sort">
+                <i class="bi bi-sort-alpha-down"></i> Sort
+            </button>
+
+            <div class="vr"></div>
+
+            <!-- Button to delete photos -->
+            <button @click="deleteSelected" class="btn btn-secondary p-2" title="Delete selected phots">
+                <i class="bi bi-trash"></i>
+            </button>
+
+            <!-- Send Message Button -->
+            <button @click="sendMessage" class="btn btn-primary p-2" :disabled="loading">Go</button>
+        </div>
+
+        <!-- Content area -->
+        <div class="content flex-grow-1 p-2">
+            <p v-if="loading">Working...</p>
+            <p v-else-if="error">{{ error }}</p>
+
+            <div v-if="imageDescriptions.length > 0" :class="`row row-cols-${columnsCount} g-3`">
+                <div class="col" v-for="imgDesc in imageDescriptions" :key="imgDesc.filename">
+                    <div class="card h-100 text-start">
+                        <div class="position-relative">
+                            <img :src="getImageURL(imgDesc.thumbnail_base64)" class="card-img-top img-thumbnail"
+                                alt="Image">
+                            <!-- Each image shows its own spinner if the system is loading -->
+                            <div v-if="loading && !imgDesc.summary" class="spinner-overlay">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-if="!!imgDesc.scene" class="card-body">
+                            <div class="card-title d-flex justify-content-between align-items-center">
+                                {{ imgDesc.filename }}
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch" value=""
+                                        :id="`flexCheckDefault-${imgDesc.filename}`" v-model="imgDesc.delete">
+                                    <label class="form-check-label" :for="`flexCheckDefault-${imgDesc.filename}`">
+                                        <i class="bi bi-trash"></i>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="accordion mt-3" :id="`accordionDetails-${imgDesc.filename}`">
+                                <div class="accordion-item">
+                                    <h2 class="accordion-header" :id="`headingDetails-${imgDesc.filename}`">
+                                        <button class="accordion-button collapsed" type="button"
+                                            data-bs-toggle="collapse"
+                                            :data-bs-target="`#collapseDetails-${imgDesc.filename}`"
+                                            aria-expanded="false"
+                                            :aria-controls="`collapseDetails-${imgDesc.filename}`">
+                                            Quality {{ imgDesc.image_rank }}/10
+                                        </button>
+                                    </h2>
+                                    <div :id="`collapseDetails-${imgDesc.filename}`" class="accordion-collapse collapse"
+                                        :aria-labelledby="`headingDetails-${imgDesc.filename}`">
+                                        <div class="accordion-body">
+
+                                            <div v-if="imgDesc?.metadata && Object.keys(imgDesc.metadata).length > 0"
+                                                class="card-text">
+                                                {{
+                                                    imgDesc?.metadata["exif"]["0th"]["Make"] || ''
+                                                }}
+                                                <div class="vr"></div>
+                                                {{
+                                                    new Date(imgDesc?.metadata["exif"]["0th"]["DateTime"]
+                                                        .replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3')
+                                                        .replace(' ', 'T')).toLocaleString(getBrowserLocale()) || ''
+                                                }}
+                                                <!-- {{ imgDesc?.metadata }} -->
+                                            </div>
+
+                                            <p class="card-text">
+                                                <strong>The Photo:</strong>
+                                                {{ imgDesc?.summary || '' }}
+                                            </p>
+
+                                            <p v-if="imgDesc?.delete_reason" class="card-text">
+                                                <strong>Delete Reason:</strong> {{
+                                                    imgDesc?.delete_reason || '' }}
+                                            </p>
+
+                                            <p v-if="imgDesc?.keep_reason" class="card-text">
+                                                <strong>Keep Reason:</strong> {{
+                                                    imgDesc?.keep_reason || ''
+                                                }}
+                                            </p>
+                                            <p v-if="imgDesc?.scene" class="card-text">
+                                                <strong>Scene:</strong> {{
+                                                    imgDesc?.scene || ''
+                                                }}
+                                            </p>
+                                            <p class="card-text">
+                                                <strong>Setting:</strong> {{
+                                                    imgDesc?.setting || ''
+                                                }}
+                                            </p>
+                                            <p v-if="imgDesc?.text_content" class="card-text">
+                                                <strong>Text Content:</strong> {{
+                                                    imgDesc?.text_content || ''
+                                                }}
+                                            </p>
+
+                                            <p v-if="imgDesc?.forencic_analysis" class="card-text">
+                                                <strong>Analysis:</strong> {{
+                                                    imgDesc?.forencic_analysis || ''
+                                                }}
+                                            </p>
+
+                                            <div v-if="imgDesc?.objects?.length">
+                                                <strong>Objects:</strong>
+                                                <div>
+                                                    <ul v-for="object in imgDesc.objects" :key="object.name"
+                                                        class="list-group">
+                                                        <li class="list-group-item d-flex align-items-start">
+                                                            <div class="ms-2 me-auto">
+                                                                <div class="fw-italic">{{ object.name }}
+                                                                </div>
+                                                                {{ object.attributes }}
+                                                            </div>
+                                                        </li>
+                                                    </ul>
+                                                </div>
+                                            </div>
+
+                                            <p v-if="imgDesc?.quality_criteria" class="card-text">
+                                                <strong>Quality Checks:</strong> {{
+                                                    imgDesc?.quality_criteria || ''
+                                                }}
+                                            </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div v-else class="card-body">
+                            <div class="card-title d-flex justify-content-between align-items-center">
+                                <div class="vstack">
+                                    <div class="hstack">
+                                        <div class="p-2">
+                                            <button @click="sendMessage" class="btn btn-outline-primary"
+                                                :disabled="loading">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            Analyse
+                                        </div>
+                                        <div class="p-2  ms-auto">
+                                            <div class="form-check form-switch">
+                                                <input class="form-check-input" type="checkbox" role="switch" value=""
+                                                    :id="`flexCheckDefault-${imgDesc.filename}`"
+                                                    v-model="imgDesc.delete">
+                                                <label class="form-check-label"
+                                                    :for="`flexCheckDefault-${imgDesc.filename}`">
+                                                    <i class="bi bi-trash"></i>
+                                                </label>
+
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="card-text">
+                                        <div class="">{{ imgDesc.filename }}</div>
+                                        <div v-if="imgDesc?.metadata && Object.keys(imgDesc.metadata).length > 0"
+                                            class="card-text">
+                                            {{
+                                                new Date(imgDesc?.metadata["exif"]["0th"]["DateTime"]
+                                                    .replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3')
+                                                    .replace(' ', 'T')).toLocaleString(getBrowserLocale()) || ''
+                                            }}
+                                            <div class="vr"></div>
+                                            {{
+                                                imgDesc?.metadata["exif"]["0th"]["Make"] || ''
+                                            }}
+
+                                            <!-- {{ imgDesc?.metadata }} -->
+                                        </div>
+
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Analysis Modal -->
+    <div class="modal fade" id="analysisModal" tabindex="-1" aria-labelledby="analysisModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="analysisModalLabel">Configuration</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <h4>Profile</h4>
+                    <select class="form-select mb-3" v-model.number="selectedPromptId">
+                        <option v-for="p in promptsOptions" :key="p.id" :value="p.id">
+                            {{ p.name }}
+                        </option>
+                    </select>
+                    <h4 class="mt-3">Card Columns</h4>
+                    <select class="form-select mb-3" v-model.number="columnsCount">
+                        <option v-for="n in [1, 2, 3, 4, 5]" :key="n" :value="n">{{ n }}</option>
+                    </select>
+
+                    <h4>Prompt</h4>
+                    <ul class="">
+                        <li v-for="(pr, index) in prompt" :key="index">
+                            <div class="">{{ pr }}</div>
+                        </li>
+                    </ul>
+
+                    <h4>Deletion criteria</h4>
+                    <ul class="list-group m-2">
+                        <li v-for="(crit, index) in criteria" :key="index"
+                            class="list-group-item d-flex align-items-center">
+                            <input type="checkbox" v-model="crit.selected" class="form-check-input me-2"
+                                :id="`criteria-${index}`" />
+                            <label :for="`criteria-${index}`" class="mb-0">{{ crit.text }}</label>
+                        </li>
+                    </ul>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Ok</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</template>
+
+<style scoped lang="css">
 .position-relative {
     position: relative;
 }
