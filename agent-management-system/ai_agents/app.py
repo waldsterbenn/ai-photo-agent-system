@@ -3,7 +3,6 @@ from flask import Flask, request, jsonify
 from datastructures.image_carrier import ImageCarrier
 
 app = Flask(__name__)
-manager = AgentManager()
 
 
 @app.route('/')
@@ -28,7 +27,8 @@ def submit_task():
 
     # Convert JSON array to a list of ImageCarrier objects
     image_carriers = [ImageCarrier(**item) for item in images]
-
+    print(f"Received {len(image_carriers)} images")
+    manager = AgentManager()
     plan = manager.plan_task(taskPrompt, criteria, image_carriers)
     result = manager.execute_task()
     return jsonify(result)

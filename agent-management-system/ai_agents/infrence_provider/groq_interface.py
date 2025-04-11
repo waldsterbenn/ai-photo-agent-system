@@ -44,6 +44,7 @@ class GroqInterface(InferenceProvider):
                 "type": "text",
                 "text": text
             })
+            print(f"Text added to groq request")
 
         # Only add image content if image is provided.
         if image:
@@ -53,7 +54,8 @@ class GroqInterface(InferenceProvider):
                     "url": f"{self.ensure_base64_str(image)}"
                 }
             })
-
+            print(f"Image added to groq request")
+        print(f"Calling grouq with chars: {len(content)}")
         response = self.client.chat.completions.create(
             messages=[{
                 "role": "user",
