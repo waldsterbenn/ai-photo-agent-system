@@ -1,0 +1,10 @@
+services:
+  ai_agents:
+    retstart: always
+  frontend:
+    retstart: always
+  backend:
+    retstart: always  
+  json_db:
+    retstart: always
+    
