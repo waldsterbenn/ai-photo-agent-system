@@ -1,10 +1,41 @@
 services:
   ai_agents:
-    retstart: always
+    restart: always
+    build:
+      context: ./ai_agents
+      dockerfile: Dockerfile.prod
+    ports:
+      - "6000:6000"
+    environment:
+      - FLASK_ENV=production
+
   frontend:
-    retstart: always
+    restart: always
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.prod
+    ports:
+      - "8080:8080"
+    environment:
+      - NODE_ENV=production
+    command: ["yarn", "serve"]
+
   backend:
-    retstart: always  
+    restart: always
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.prod
+    ports:
+      - "5000:5000"
+    environment:
+      - FLASK_ENV=production
+
   json_db:
-    retstart: always
-    
+    restart: always
+    build:
+      context: ./json_db
+      dockerfile: Dockerfile.prod
+    ports:
+      - "7000:7000"
+    environment:
+      - FLASK_ENV=production

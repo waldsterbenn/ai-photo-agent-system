@@ -1,4 +1,3 @@
-version: '3.8'
 services:
   ai_agents:
     ports:
@@ -27,6 +26,7 @@ services:
             target: /app/src
           - action: rebuild
             path: package.json
+    command: ["yarn", "dev"]
   backend:
     ports:
       - "5679:5678"
