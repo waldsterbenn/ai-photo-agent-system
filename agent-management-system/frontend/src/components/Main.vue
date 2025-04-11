@@ -404,7 +404,8 @@ async function sendMessage(e: Event) {
 
                 try {
                     const existing = imageDescriptions.value[existingIndex];
-                    await axios.put(`${backendUrl}/update-image-description`, { description: existing }, {
+                    const imgDescDto = Object.assign(new ImageDescriptionDto(), existing);
+                    await axios.put(`${backendUrl}/update-image-description`, { description: imgDescDto }, {
                         headers: { "Content-Type": "application/json" }
                     });
                 } catch (err) {
