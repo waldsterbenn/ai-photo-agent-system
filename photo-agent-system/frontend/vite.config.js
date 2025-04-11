@@ -19,6 +19,7 @@ export default defineConfig({
   server: {
     host: "0.0.0.0",
     port: 8080,
+    allowedHosts: ["frontend-production-0b176.up.railway.app", "localhost"],
     watch: {
       usePolling: true // Use polling to watch for file changes
     }
