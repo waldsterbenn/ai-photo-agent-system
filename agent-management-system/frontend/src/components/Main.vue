@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { defineAsyncComponent } from 'vue';
 import axios from 'axios';
 // Import Bootstrap Modal from bootstrap's JS distribution
 import { backendUrl } from '@/config/backend_conf';
@@ -7,9 +8,12 @@ import * as promptsData from '@/config/prompts.json';
 import { ImageDescriptionDto } from '@/data/ImageDescriptionDto';
 import { ImageDescriptionViewModel } from '@/data/ImageDescriptionViewModel';
 import { ImageTools } from '@/tools/ImageTools';
-import { DuplicateFinder } from '@/tools/DuplicateFinder';
 import Modal from 'bootstrap/js/dist/modal';
 import { computed, onMounted, ref, toRaw, watch } from 'vue';
+
+// Import DuplicateImages component asynchronously
+const DuplicateImages = defineAsyncComponent(() => import('./DuplicateImages.vue'));
+const searchForDuplicates = ref<boolean>(false);
 
 const statusUrl = computed(() => `${backendUrl}/status`);
 const processUrl = computed(() => `${backendUrl}/processtask`);
@@ -47,11 +51,6 @@ watch(selectedPromptId, (selectedId: number) => {
     }
 });
 
-const duplicates = ref<ImageDescriptionViewModel[]>([]);
-const hasDuplicates = computed(() => {
-    return (findDuplicates(imageDescriptions.value)).length > 0;
-});
-
 // Get existing ImageDescriptions from backend and set them to the imageDescriptions ref.
 async function fetchImageDescriptions() {
     console.log("Fetching image descriptions...");
@@ -75,38 +74,6 @@ function triggerImagePicker() {
 
 function getImageURL(image: string): string {
     return image.startsWith('data:') ? image : `data:image/png;base64,${image}`;
-}
-
-async function scaleImageFile(file: File, scaleFactor: number = 1): Promise<string> {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        img.onload = () => {
-            const width = img.width * scaleFactor;
-            const height = img.height * scaleFactor;
-
-            const canvas = document.createElement("canvas");
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext("2d");
-            if (!ctx) {
-                return reject(new Error("Unable to get canvas context"));
-            }
-            ctx.drawImage(img, 0, 0, width, height);
-            resolve(canvas.toDataURL("image/png"));
-        };
-        img.onerror = (err) => reject(err);
-
-        const reader = new FileReader();
-        reader.onload = () => {
-            if (typeof reader.result === "string") {
-                img.src = reader.result;
-            } else {
-                reject(new Error("Unexpected result type."));
-            }
-        };
-        reader.onerror = () => reject(reader.error);
-        reader.readAsDataURL(file);
-    });
 }
 
 async function handleImageUpload(event: Event) {
@@ -228,24 +195,6 @@ async function deleteSelected(params: Event) {
     }
 }
 
-const fetchStatus = async () => {
-    try {
-        const response = await axios.get(statusUrl.value);
-        imageDescriptions.value = JSON.stringify(response.data);
-    } catch (err) {
-        error.value = err.message;
-    } finally {
-        loading.value = false;
-    }
-};
-
-function updateDeleteStatus(filename: string, value: boolean) {
-    const description = getDescription(filename);
-    if (description) {
-        description.delete = value;
-    }
-}
-
 function openAnalysisModal() {
     const modalEl = document.getElementById('analysisModal');
     if (modalEl) {
@@ -264,11 +213,8 @@ function getBrowserLocale() {
 
 }
 
-function findDuplicates(imgDcs: ImageDescriptionViewModel[]) {
-    if (!imgDcs || imgDcs.length === 0) return [];
-    const clusters = new DuplicateFinder(duplicateTimeThresholdMs).findDuplicates(imgDcs);
-
-    return clusters;
+function findDuplicates() {
+    searchForDuplicates.value = !searchForDuplicates.value;
 }
 
 </script>
@@ -291,6 +237,10 @@ function findDuplicates(imgDcs: ImageDescriptionViewModel[]) {
                 <i class="bi bi-image"></i> Select Photos
             </button>
 
+            <button @click="findDuplicates" class="btn btn-secondary p-2" title="Find Duplicates">
+                <i class="bi bi-copy"></i> Duplicates
+            </button>
+
             <button @click="" class="btn btn-secondary p-2 disabled" title="Sort">
                 <i class="bi bi-sort-alpha-down"></i> Sort
             </button>
@@ -307,49 +257,30 @@ function findDuplicates(imgDcs: ImageDescriptionViewModel[]) {
         </div>
 
 
-        <div class="content flex-grow-1 p-2 bg-secondary">
+        <div>
+            <Suspense v-if="searchForDuplicates">
+                <div class="content flex-grow-1 p-2 bg-secondary">
+                    <!-- Replace duplicate logic with the new async component -->
+                    <DuplicateImages :imageDescriptions="imageDescriptions" :getImageURL="getImageURL"
+                        :getBrowserLocale="getBrowserLocale" :duplicateTimeThresholdMs="duplicateTimeThresholdMs" />
+                </div>
+                <template #fallback>
 
-            <div v-if="hasDuplicates">
-                <div v-for="cluster in findDuplicates(imageDescriptions)" :key="cluster.time" class="row">
-                    <div class="col m-2">
-                        <div class="card text-center">
-                            <div class="card-header">
-                                Duplicated images ({{ new Date(cluster.time).toLocaleString(getBrowserLocale()) }})
-                            </div>
-                            <div class="hstack">
-                                <div class="m-2" v-for="imgDesc in cluster.images">
-                                    <div :class="`card ${imgDesc.delete ? 'border border-danger' : ''}`">
-                                        <img :src="getImageURL(imgDesc.thumbnail_base64)"
-                                            class="card-img-top img-thumbnail" alt="Image">
-
-                                        <button @click.stop="imgDesc.delete = !imgDesc.delete"
-                                            class="btn btn-sm btn-primary m-2" title="Toggle delete">
-                                            <i class="bi bi-trash"></i>
-                                        </button>
-                                        <div class="card-body">
-                                            <p class="card-text">{{ imgDesc.filename }}</p>
-
-
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                    <div class="text-center">
+                        <div class="d-flex align-items-center">
+                            <strong role="status">Searching for duplicates...</strong>
+                            <div class="spinner-border ms-auto" aria-hidden="true"></div>
                         </div>
                     </div>
-                </div>
-
-
-            </div>
-
+                </template>
+            </Suspense>
         </div>
-
         <div class="hr"></div>
         <!-- Content area -->
 
         <div class="content flex-grow-1 p-2">
             <p v-if="loading">Working...</p>
             <p v-else-if="error">{{ error }}</p>
-
 
             <div v-if="imageDescriptions.length > 0" :class="`row row-cols-${columnsCount} g-3`">
                 <div class="col" v-for="imgDesc in imageDescriptions" :key="imgDesc.filename">
