@@ -9,5 +9,5 @@ COPY . .
 
 EXPOSE 6000
 ENV FLASK_APP=app.py
-ENV FLASK_ENV=production
+#ENV FLASK_ENV=production
 CMD ["gunicorn", "app:app", "--bind [::]:${PORT-6000}"]
