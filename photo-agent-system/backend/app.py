@@ -3,12 +3,13 @@ from flask_cors import CORS  # add this import
 import requests
 import json
 from image_tools import ImageTool
+import os
 
 app = Flask(__name__)
 CORS(app)  # enable CORS for all routes
 
-agent_manager_url = "http://ai_agents:6000"
-json_db_url = "http://json_db:7000"
+agent_manager_url = os.getenv("AGENT_SERVICE_URL", "http://ai_agents:6000")
+json_db_url = os.getenv("DB_SERVICE_URL", "http://json_db:7000")
 
 
 def submit_task(jsonData):
