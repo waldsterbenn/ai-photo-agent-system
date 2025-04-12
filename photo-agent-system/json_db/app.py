@@ -7,20 +7,28 @@ from pydantic import ValidationError
 from image_description_model import ImageDescriptionModel
 from user_model import UserModel
 
+print("Starting server...")
 app = Flask(__name__)
 CORS(app)
+print("CORS enabled")
 
+print("Setting up directories...")
 BASE_FOLDER = os.path.dirname(os.path.join(os.getcwd(), "app"))
 DATA_FOLDER = os.path.join(BASE_FOLDER, "data")
 
 UPLOAD_FOLDER = os.path.join(DATA_FOLDER, "image_uploads")
+print(f"Creating Upload folder: {UPLOAD_FOLDER}")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
+print("creating database")
 # Initialize TinyDB (data stored in db.json)
 DB_PATH = os.path.join(DATA_FOLDER, "db.json")
 db = TinyDB(DB_PATH)
 img_table = db.table("image_descriptions")
 user_table = db.table("users")
+
+print("Setup complete")
+
 
 # Helper function to assign an auto-incremented id
 
