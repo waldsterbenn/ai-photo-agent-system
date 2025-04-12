@@ -20,4 +20,4 @@ ENV VITE_APP_BACKEND_URL=http://backend-production-4fbd.up.railway.app:5000
 
 # Default production command (can be overridden in docker-compose)
 #CMD ["yarn", "serve"]
-CMD ["sh", "-c", "serve -s dist -l ${PORT:-8080}"]
+CMD ["yarn", "serve"]
