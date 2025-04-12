@@ -5,4 +5,5 @@ Werkzeug<3.0
 piexif
 Pillow
 debugpy
+Gunicorn
 
