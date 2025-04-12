@@ -63,6 +63,7 @@ async function fetchImageDescriptions() {
 
     } catch (err) {
         console.error("Error fetching image descriptions:", err);
+        error.value = (err as Error);
     }
 }
 // Fetch image descriptions on component mount
