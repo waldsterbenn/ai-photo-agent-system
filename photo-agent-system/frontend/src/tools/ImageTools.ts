@@ -21,7 +21,7 @@ export class ImageTools {
     
         const formData = new FormData();
         formData.append('image', file);
-        formData.append('targetSizeMB', targetSizeByte.toString());
+        formData.append('targetSizeBytes', targetSizeByte.toString());
         
         try {
             const response: AxiosResponse = await axios.post(this.backendCompressUrl, formData, 
