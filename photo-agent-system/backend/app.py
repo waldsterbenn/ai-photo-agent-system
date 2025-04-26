@@ -178,6 +178,7 @@ def delete_image_descriptions():
 
 @app.route('/compress-image', methods=['POST'])
 def compress_image_endpoint():
+    print("Compressing image")
     if 'image' not in request.files:
         return jsonify({'error': 'No image provided'}), 400
 
@@ -199,7 +200,8 @@ def compress_image_endpoint():
         # Calculate sizes
         original_size_mb = len(image_data) / (1024 * 1024)
         compressed_size_mb = len(compressed_data) / (1024 * 1024)
-
+        print(
+            f"Compress ratio: {original_size_mb:.2f}MB -> {compressed_size_mb:.2f}MB ({compressed_size_mb/original_size_mb*100:.2f}%)")
         # Create response with metadata
         response = make_response(compressed_data)
         response.headers.set('Content-Type', 'image/jpeg')
