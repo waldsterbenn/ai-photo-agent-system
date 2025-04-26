@@ -42,46 +42,48 @@ const backendAvailable = ref(false);
 const agentsAvailable = ref(false);
 const dbAvailable = ref(false);
 
-const backendStatus = computed(() => `${backendUrl}/api`);
-const agentStatus = computed(() => `${backendUrl}/agent-status`);
-const dbStatus = computed(() => `${backendUrl}/db-status`);
+console.debug(`Backend URL: ${backendUrl}`);
+
+const backendStatusUrl = computed(() => `${backendUrl}/api`);
+const agentStatusUrl = computed(() => `${backendUrl}/agent-status`);
+const dbStatusUrl = computed(() => `${backendUrl}/db-status`);
 
 onMounted(() => {
-    axios.get(backendStatus.value)
+    axios.get(backendStatusUrl.value)
         .then(response => {
             // Assume a successful response means the backend is available.
             backendAvailable.value = true;
-            console.debug("Backend connected", response?.data ?? "No message");
+            console.debug(`Backend connected (${backendStatusUrl})`, response?.data ?? "No message");
 
         })
         .catch(error => {
             // On error, mark the backend as unavailable.
             backendAvailable.value = false;
-            console.error("Backend connection failed:", error);
+            console.error(`Backend failed (${backendStatusUrl})`, error);
         });
 
-    axios.get(agentStatus.value)
+    axios.get(agentStatusUrl.value)
         .then(response => {
             // Assume a successful response means the backend is available.
             agentsAvailable.value = true;
-            console.debug("Agents backend connected", response?.data ?? "No message");
+            console.debug(`Agent connected (${agentStatusUrl})`, response?.data ?? "No message");
         })
         .catch(error => {
             // On error, mark the backend as unavailable.
             agentsAvailable.value = false;
-            console.error("Agents connection failed:", error);
+            console.error(`Agent connected (${agentStatusUrl})`, error);
         });
 
-    axios.get(dbStatus.value)
+    axios.get(dbStatusUrl.value)
         .then(response => {
             // Assume a successful response means the backend is available.
             dbAvailable.value = true;
-            console.debug("DB backend connected", response?.data ?? "No message");
+            console.debug(`DB connected (${dbStatusUrl})`, response?.data ?? "No message");
         })
         .catch(error => {
             // On error, mark the backend as unavailable.
             dbAvailable.value = false;
-            console.error("DB connection failed:", error);
+            console.error(`DB connected (${dbStatusUrl})`, error);
         });
 });
 
