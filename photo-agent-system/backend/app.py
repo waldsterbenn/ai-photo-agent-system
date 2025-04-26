@@ -28,14 +28,22 @@ def api():
 
 @app.route('/agent-status', methods=['GET'])
 def agentstatus():
-    response = requests.get(f"{agent_manager_url}/status")
-    return response.json()
+    try:
+        response = requests.get(f"{agent_manager_url}/status")
+        response.raise_for_status()  # Raises an HTTPError for bad responses
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({"error": f"Agent status request failed: {str(e)}"}), 500
 
 
 @app.route('/db-status', methods=['GET'])
 def dbstatus():
-    response = requests.get(f"{json_db_url}/status")
-    return response.json()
+    try:
+        response = requests.get(f"{json_db_url}/status")
+        response.raise_for_status()  # Raises an HTTPError for bad responses
+        return jsonify(response.json())
+    except Exception as e:
+        return jsonify({"error": f"DB status request failed: {str(e)}"}), 500
 
 
 @app.route('/processtask', methods=['POST'])
