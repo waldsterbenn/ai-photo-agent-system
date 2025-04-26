@@ -55,7 +55,7 @@ class ImageTool:
         except Exception as e:
             return {"error": f"Error extracting metadata: {str(e)}"}
 
-    def compress_image_to_target_size(self, image_data, target_size_byte):
+    def compress_image_to_target_size(self, image_data, target_size_bytes):
         """
         Compress an image to a target size in megabytes using PIL
 
@@ -66,7 +66,6 @@ class ImageTool:
         Returns:
             bytes: Compressed image data
         """
-        target_size_bytes = int(target_size_byte * 1024 * 1024)
 
         # Open the image
         img = Image.open(BytesIO(image_data))
@@ -77,7 +76,8 @@ class ImageTool:
 
         # Start with these parameters
         quality = 95
-        width, height = img.size
+        width = img.width
+        height = img.height
 
         # Compression approach - start with high quality and reduce
         while quality >= 20:
@@ -91,7 +91,8 @@ class ImageTool:
             )
 
             current_size = output.tell()
-
+            print(
+                f"Compression: ({current_size/len(image_data)*100:.2f}%)")
             # If size is within target, return the image
             if current_size <= target_size_bytes:
                 return output.getvalue()
