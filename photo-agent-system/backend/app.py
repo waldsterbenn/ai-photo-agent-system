@@ -34,7 +34,7 @@ def api():
 
 @app.route('/agent-status', methods=['GET'])
 def agentstatus():
-    print("Pinging agent status")
+    print(f"Pinging agent status: {get_agent_manager_url()}")
     try:
         response = requests.get(f"{get_agent_manager_url()}/status")
         response.raise_for_status()  # Raises an HTTPError for bad responses
@@ -45,7 +45,7 @@ def agentstatus():
 
 @app.route('/db-status', methods=['GET'])
 def dbstatus():
-    print("Pinging DB status")
+    print(f"Pinging DB status: {get_db_url()}")
     try:
         response = requests.get(f"{get_db_url()}/status")
         response.raise_for_status()  # Raises an HTTPError for bad responses
