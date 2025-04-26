@@ -53,10 +53,14 @@ class AgentManager:
         response = self.inference.infer(
             prompt=planPrompt, format=Plan.model_json_schema())
 
-        plan = Plan.model_validate_json(response)
+        try:
+            plan = Plan.model_validate_json(response)
+        except Exception as e:
+            print(f"Error in plan_task: {e}")
+            raise ValueError(
+                f"Failed to parsing json Plan response: {response}")
 
         for agentInstruction in plan.agentPrompts:
-
             image = list(
                 filter(lambda x: (x.filename == agentInstruction.filename), image_carriers))[0]
             if image is not None:

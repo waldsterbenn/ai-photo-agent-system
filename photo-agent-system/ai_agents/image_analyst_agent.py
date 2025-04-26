@@ -25,7 +25,13 @@ class ImageAnalystAgent():
                                        )
 
         # Convert received content to the schema
-        image_analysis = ImageDescription.model_validate_json(message)
+        try:
+            image_analysis = ImageDescription.model_validate_json(message)
+        except Exception as e:
+            print(f"Error in image analysis: {e}")
+            raise ValueError(
+                f"Error parsing json ImageDescription: {message}")
+
         if image_analysis.filename != self.imageData.filename:
             image_analysis.filename = self.imageData.filename
         return image_analysis
