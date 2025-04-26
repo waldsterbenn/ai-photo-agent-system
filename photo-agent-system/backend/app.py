@@ -8,28 +8,35 @@ import os
 app = Flask(__name__)
 CORS(app)  # enable CORS for all routes
 
-agent_manager_url = os.getenv("AGENT_SERVICE_URL", "http://ai_agents:6000")
-json_db_url = os.getenv("DB_SERVICE_URL", "http://json_db:7000")
+
+def get_agent_manager_url():
+    return os.getenv("AGENT_SERVICE_URL", "http://ai_agents:6000")
+
+
+def get_db_url():
+    return os.getenv("DB_SERVICE_URL", "http://json_db:7000")
 
 
 def submit_task(jsonData):
     """Submit a task to the agent server."""
 
     response = requests.post(
-        f"{agent_manager_url}/task", json=jsonData)
+        f"{get_agent_manager_url()}/task", json=jsonData)
     # response.raise_for_status()
     return response.json()
 
 
 @app.route('/api', methods=['GET'])
 def api():
+    print("API endpoint called")
     return jsonify({"message": "Backend connected"})
 
 
 @app.route('/agent-status', methods=['GET'])
 def agentstatus():
+    print("Pinging agent status")
     try:
-        response = requests.get(f"{agent_manager_url}/status")
+        response = requests.get(f"{get_agent_manager_url()}/status")
         response.raise_for_status()  # Raises an HTTPError for bad responses
         return jsonify(response.json())
     except Exception as e:
@@ -38,8 +45,9 @@ def agentstatus():
 
 @app.route('/db-status', methods=['GET'])
 def dbstatus():
+    print("Pinging DB status")
     try:
-        response = requests.get(f"{json_db_url}/status")
+        response = requests.get(f"{get_db_url()}/status")
         response.raise_for_status()  # Raises an HTTPError for bad responses
         return jsonify(response.json())
     except Exception as e:
@@ -65,7 +73,7 @@ def get_image_descriptions():
     """
     Fetches all image descriptions from the json_db.
     """
-    response = requests.get(f"{json_db_url}/image-descriptions")
+    response = requests.get(f"{get_db_url()}/image-descriptions")
     if response.status_code != 200:
         return jsonify({"error": "Failed to fetch image descriptions"}), 500
     return jsonify(response.json()), 200
@@ -100,7 +108,7 @@ def create_image_description():
 
     # Upload file to the json_db container and get the file URI
     upload_resp = requests.post(
-        f"{json_db_url}/upload",
+        f"{get_db_url()}/upload",
         files={"file": (file.filename, file.stream, file.mimetype)},
         data={"filename": file.filename}
     )
@@ -116,7 +124,7 @@ def create_image_description():
 
     # Post the complete ImageDescription to json_db
     create_resp = requests.post(
-        f"{json_db_url}/image-descriptions", json=description_data)
+        f"{get_db_url()}/image-descriptions", json=description_data)
     if create_resp.status_code not in (200, 201):
         return jsonify({"error": "Image description creation failed", "details": create_resp.text}), 500
 
@@ -139,7 +147,7 @@ def update_image_description():
         return jsonify({"error": "No image id provided in payload"}), 400
 
     update_resp = requests.put(
-        f"{json_db_url}/image-descriptions/{image_id}",
+        f"{get_db_url()}/image-descriptions/{image_id}",
         json=description_data
     )
     if update_resp.status_code not in (200, 201):
@@ -164,7 +172,7 @@ def delete_image_descriptions():
     for image_id in ids:
         id = image_id["id"]
         delete_resp = requests.delete(
-            f"{json_db_url}/image-descriptions/{id}")
+            f"{get_db_url()}/image-descriptions/{id}")
         if delete_resp.status_code != 200:
             return jsonify({"error": "Image description deletion failed", "details": delete_resp.text}), 500
 
