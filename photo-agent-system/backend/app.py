@@ -17,15 +17,6 @@ def get_db_url():
     return os.getenv("DB_SERVICE_URL", "http://json_db:7000")
 
 
-def submit_task(jsonData):
-    """Submit a task to the agent server."""
-
-    response = requests.post(
-        f"{get_agent_manager_url()}/task", json=jsonData)
-    # response.raise_for_status()
-    return response.json()
-
-
 @app.route('/api', methods=['GET'])
 def api():
     print("API endpoint called")
@@ -56,13 +47,19 @@ def dbstatus():
 
 @app.route('/processtask', methods=['POST'])
 def process_task():
-    data = request.get_json()
-    taskId = data.get('taskId')
+    jsonData = request.get_json()
+    taskId = jsonData.get('taskId')
     if not taskId:
         return jsonify({'error': 'No task provided'}), 400
 
-    result = submit_task(data)
-    return jsonify({'taskId': taskId, 'status': 'success', 'result': result})
+    try:
+        response = requests.post(
+            f"{get_agent_manager_url()}/task", json=jsonData)
+        response.raise_for_status()
+        return jsonify({'taskId': taskId, 'status': 'success', 'result': response.json()}), 200
+    except Exception as e:
+        print(f"Error submitting task: {e}")
+        return jsonify({"error": "Failed to submit task"}), 500
 
 
 """ Endpoint to get list of existing ImageDescriptions """
