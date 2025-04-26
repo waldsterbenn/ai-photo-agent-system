@@ -39,7 +39,7 @@ class GroqInterface(InferenceProvider):
         print(f"Initializing GroqInterface with model: {self.model}")
         self.client = Groq(api_key=self.api_key)
 
-    def infer(self, prompt: str, image: str = None, format: str = None, temperature: float = 0.0) -> str:
+    def infer(self, prompt: str, image: str = None, format: str = None, temperature: float = 1.0) -> str:
         content = []
         prettyFormat = json.dumps(format, indent=2)
         # Only add text content if prompt is provided.

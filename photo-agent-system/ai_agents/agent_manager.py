@@ -20,7 +20,7 @@ class AgentManager:
         self.inference = InferenceProviderFactory().create_provider()
         self.agents: list[ImageAnalystAgent] = []
         self.tools = {}
-        self.llm_temp = 0.2
+        self.llm_temp = 0.1
         print("AgentManager constructed")
 
     def plan_task(self, taskPrompt: str, criteria: List[str], image_carriers: List[ImageCarrier]) -> Plan:
@@ -48,6 +48,8 @@ class AgentManager:
             
             Image filenames:
             {', '.join([carrier.filename for carrier in image_carriers])}
+            
+            Output should strictly follow the provided JSON format.
             """
 
         response = self.inference.infer(
