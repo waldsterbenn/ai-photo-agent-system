@@ -22,6 +22,11 @@ class GroqInterface(InferenceProvider):
                 self.api_key: Optional[str] = f.read().strip()
         except FileNotFoundError:
             print("API key secret not found.")
+            try:
+                with open("/etc/secrets/GROQ_API_KEY", "r") as f:
+                    self.api_key: Optional[str] = f.read().strip()
+            except FileNotFoundError:
+                print("API key secret not found.")
 
         if not self.api_key:
             raise ValueError(
