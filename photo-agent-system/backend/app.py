@@ -184,7 +184,7 @@ def compress_image_endpoint():
 
     try:
         image_file = request.files['image']
-        target_size_mb = float(request.form.get('targetSizeBytes', 2.0))
+        target_size_byte = float(request.form.get('targetSizeBytes', 2.0))
 
         # Read image data
         image_data = image_file.read()
@@ -195,7 +195,7 @@ def compress_image_endpoint():
 
         # Compress image
         compressed_data = image_tool.compress_image_to_target_size(
-            image_data, target_size_mb)
+            image_data, target_size_byte)
 
         # Calculate sizes
         original_size_mb = len(image_data) / (1024 * 1024)
