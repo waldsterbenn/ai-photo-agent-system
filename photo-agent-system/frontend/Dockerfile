@@ -16,7 +16,7 @@ RUN yarn install --only=production --ignore-engines
 
 EXPOSE ${PORT:-8080}
 
-ENV VITE_APP_BACKEND_URL=http://backend-production-4fbd.up.railway.app:5000
+#ENV VITE_APP_BACKEND_URL=http://backend-production-4fbd.up.railway.app:5000
 
 # Default production command (can be overridden in docker-compose)
 #CMD ["yarn", "serve"]
