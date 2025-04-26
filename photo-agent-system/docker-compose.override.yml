@@ -1,5 +1,7 @@
 services:
   ai_agents:
+    build:
+      dockerfile: Dockerfile.dev  # Use the development Dockerfile
     ports:
       - "5678:5678"
     environment:
@@ -19,6 +21,8 @@ services:
     command: ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", "flask", "run", "--no-reload"]
     
   frontend:
+    build:
+        dockerfile: Dockerfile.dev  # Use the development Dockerfile
     develop:
         watch:
           - action: sync
@@ -28,6 +32,8 @@ services:
             path: package.json
     command: ["yarn", "dev"]
   backend:
+    build:
+      dockerfile: Dockerfile.dev  # Use the development Dockerfile
     ports:
       - "5679:5678"
     environment:
@@ -47,6 +53,8 @@ services:
     command: ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", "flask", "run", "--no-reload"]
   
   json_db:
+    build:
+        dockerfile: Dockerfile.dev  # Use the development Dockerfile
     ports:
       - "5680:5678"
     environment:

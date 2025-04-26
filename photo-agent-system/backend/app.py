@@ -22,13 +22,19 @@ def submit_task(jsonData):
 
 
 @app.route('/api', methods=['GET'])
-def home():
-    return jsonify({"message": "Welcome to the Python backend!"})
+def api():
+    return jsonify({"message": "Backend connected"})
 
 
-@app.route('/status', methods=['GET'])
-def status():
+@app.route('/agent-status', methods=['GET'])
+def agentstatus():
     response = requests.get(f"{agent_manager_url}/status")
+    return response.json()
+
+
+@app.route('/db-status', methods=['GET'])
+def dbstatus():
+    response = requests.get(f"{json_db_url}/status")
     return response.json()
 
 

@@ -12,10 +12,20 @@
                             <router-link to="/api" class="nav-link">A link</router-link>
                         </li> -->
                     </ul>
-                    <!-- Embedded component -->
-                    <!-- <div class="d-flex align-items-center">
-
-                    </div> -->
+                    <div class="d-flex align-items-center">
+                        <i v-if="backendAvailable" class="bi bi-check-circle-fill text-success"
+                            title="Backend connected"></i>
+                        <i v-else class="bi bi-x-circle-fill text-danger" title="Backend disconnected"></i>
+                    </div>
+                    <div class="d-flex align-items-center ms-3">
+                        <i v-if="agentsAvailable" class="bi bi-check-circle-fill text-success"
+                            title="Agent connected"></i>
+                        <i v-else class="bi bi-x-circle-fill text-danger" title="Agent disconnected"></i>
+                    </div>
+                    <div class="d-flex align-items-center ms-3">
+                        <i v-if="dbAvailable" class="bi bi-check-circle-fill text-success" title="DB connected"></i>
+                        <i v-else class="bi bi-x-circle-fill text-danger" title="DB disconnected"></i>
+                    </div>
                 </div>
             </div>
         </nav>
@@ -23,14 +33,58 @@
     </div>
 </template>
 
-<script lang="ts">
-import { defineComponent } from 'vue';
+<script lang="ts" setup>
+import axios from 'axios';
+import { computed, onMounted, ref } from 'vue';
+import { backendUrl } from './config/backend_conf';
 
+const backendAvailable = ref(false);
+const agentsAvailable = ref(false);
+const dbAvailable = ref(false);
 
-export default defineComponent({
-    name: 'App',
-    components: {}
-})
+const backendStatus = computed(() => `${backendUrl}/api`);
+const agentStatus = computed(() => `${backendUrl}/agent-status`);
+const dbStatus = computed(() => `${backendUrl}/db-status`);
+
+onMounted(() => {
+    axios.get(backendStatus.value)
+        .then(response => {
+            // Assume a successful response means the backend is available.
+            backendAvailable.value = true;
+            console.debug("Backend connected", response?.data ?? "No message");
+
+        })
+        .catch(error => {
+            // On error, mark the backend as unavailable.
+            backendAvailable.value = false;
+            console.error("Backend connection failed:", error);
+        });
+
+    axios.get(agentStatus.value)
+        .then(response => {
+            // Assume a successful response means the backend is available.
+            agentsAvailable.value = true;
+            console.debug("Agents backend connected", response?.data ?? "No message");
+        })
+        .catch(error => {
+            // On error, mark the backend as unavailable.
+            agentsAvailable.value = false;
+            console.error("Agents connection failed:", error);
+        });
+
+    axios.get(dbStatus.value)
+        .then(response => {
+            // Assume a successful response means the backend is available.
+            dbAvailable.value = true;
+            console.debug("DB backend connected", response?.data ?? "No message");
+        })
+        .catch(error => {
+            // On error, mark the backend as unavailable.
+            dbAvailable.value = false;
+            console.error("DB connection failed:", error);
+        });
+});
+
 </script>
 
 <style>

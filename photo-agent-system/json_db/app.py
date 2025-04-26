@@ -39,9 +39,13 @@ def get_next_id(table) -> int:
         return 1
     return max(item["id"] for item in items if "id" in item) + 1
 
+
+@app.route("/status", methods=["GET"])
+def status():
+    return jsonify("json_db connected"), 200
+
+
 # File upload endpoint
-
-
 @app.route("/upload", methods=["POST"])
 def upload_file():
     if "file" not in request.files:
