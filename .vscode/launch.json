@@ -14,7 +14,7 @@
       },
       "pathMappings": [
         {
-          "localRoot": "${workspaceFolder}\\agent-management-system\\ai_agents",
+          "localRoot": "${workspaceFolder}\\PHOTO-AGENT-SYSTEM\\ai_agents",
           "remoteRoot": "/app"
         }
       ]
@@ -29,7 +29,7 @@
       },
       "pathMappings": [
         {
-          "localRoot": "${workspaceFolder}\\agent-management-system\\json_db",
+          "localRoot": "${workspaceFolder}\\PHOTO-AGENT-SYSTEM\\json_db",
           "remoteRoot": "/app"
         }
       ]
@@ -44,7 +44,7 @@
       },
       "pathMappings": [
         {
-          "localRoot": "${workspaceFolder}\\agent-management-system\\backend",
+          "localRoot": "${workspaceFolder}\\PHOTO-AGENT-SYSTEM\\backend",
           "remoteRoot": "/app"
         }
       ]

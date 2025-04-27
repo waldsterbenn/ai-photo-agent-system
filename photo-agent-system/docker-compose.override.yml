@@ -18,7 +18,7 @@ services:
             - venv/                         # Or any virtual environment folder if present
         - action: rebuild                   # Rebuild the image if dependencies change
           path: ./ai_agents/requirements.txt  # Make sure path is correct relative to compose file
-    command: ["python", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", "flask", "run", "--no-reload"]
+    command: ["python", "-Xfrozen_modules=off", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", "flask", "run", "--no-reload"]
     
   frontend:
     build:
@@ -33,7 +33,7 @@ services:
           - action: rebuild
             path: package.json
     command: ["yarn", "dev"]
-    
+
   backend:
     build:
       dockerfile: Dockerfile.dev  # Use the development Dockerfile

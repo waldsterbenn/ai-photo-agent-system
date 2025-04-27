@@ -5,4 +5,4 @@ class AgentInstruction(BaseModel):
     name: str
     filename: str
     prompt: str
-    criteria: str
+    # criteria: str

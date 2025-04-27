@@ -9,5 +9,9 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY . .
 
 EXPOSE 6000
+EXPOSE 5678
+ENV FLASK_DEBUG=1
 
-CMD ["flask", "run"] 
+CMD ["python", "-Xfrozen_modules=off", "-m", "debugpy", "--listen", "0.0.0.0:5678", "-m", "flask", "run", "--no-reload"]
+
+#CMD ["flask", "run"] 

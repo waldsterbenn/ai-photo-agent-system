@@ -46,7 +46,7 @@ class GroqInterface(InferenceProvider):
         if prompt:
             text = prompt
             if format:
-                text += f" The return object must use this JSON schema: {prettyFormat}."
+                text += f" The return object must use this JSON format: {prettyFormat}."
             content.append({
                 "type": "text",
                 "text": text
