@@ -20,6 +20,7 @@ export class ImageDescriptionViewModel {
     forencic_analysis: string;
     quality_criteria: QualityCriteriaViewModel;
     metadata: any;
+    loading: boolean;
 }
 
 export class QualityCriteriaViewModel {

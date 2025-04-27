@@ -55,6 +55,21 @@ watch(selectedPromptId, (selectedId: number) => {
 async function fetchImageDescriptions() {
     console.log("Fetching image descriptions...");
     try {
+        const count = await axios.get(`${backendUrl}/image-descriptions-count`);
+        if (count.data === 0) {
+            return;
+        }
+
+        // Create a dummy cards immediately
+        const range = Array.from({ length: count.data }, (_, i) => i);
+        const dummies = range.map((i) =>
+        ({
+            id: i,
+            dummy: true,
+            loading: true,
+        }));
+        imageDescriptions.value = dummies;
+
         const response = await axios.get(`${backendUrl}/image-descriptions`);
         if (response.data.length === 0) {
             return;
@@ -66,8 +81,33 @@ async function fetchImageDescriptions() {
         error.value = (err as Error);
     }
 }
+
+async function makePlaceholderDescriptions() {
+    console.log("Counting image descriptions...");
+    try {
+        const count = await axios.get(`${backendUrl}/image-descriptions-count`);
+        if (count.data === 0) {
+            return;
+        }
+        const range = Array.from({ length: count.data }, (_, i) => i);
+        const dummies = range.map((i) =>
+        ({
+            id: i,
+            dummy: true,
+            loading: true,
+        }));
+        imageDescriptions.value = dummies;
+    } catch (err) {
+        console.error("Error counting image descriptions:", err);
+        error.value = (err as Error);
+    }
+}
+
 // Fetch image descriptions on component mount
-onMounted(() => fetchImageDescriptions());
+onMounted(() => {
+    makePlaceholderDescriptions(); //Quick
+    fetchImageDescriptions() //Slow
+});
 
 function triggerImagePicker() {
     imageInput.value?.click();
@@ -87,9 +127,8 @@ async function handleImageUpload(event: Event) {
         const dummyCard = {
             id: Date.now(),
             filename: file.name,
-            // A gray placeholder image
-            thumbnail_base64: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2VlZSIvPjwvc3ZnPg==',
             dummy: true,
+            loading: true,
         };
         imageDescriptions.value.push(dummyCard);
     }
@@ -126,7 +165,7 @@ async function handleImageUpload(event: Event) {
                 img.filename === file.name && img.dummy === true
             );
             if (index !== -1) {
-                imageDescriptions.value[index] = { ...response.data, dummy: false };
+                imageDescriptions.value[index] = { ...response.data, dummy: false, loading: false };
             }
         } catch (err) {
             console.error("Image upload error:", err);
@@ -151,6 +190,8 @@ async function sendMessage(e: Event) {
             loading.value = false;
             return;
         }
+        setLoadingState(true, filteredImages);
+
         // Only include criteria that are selected
         const selectedCriteria = criteria.value.filter((c: { selected: boolean; }) => c.selected).map((c: { text: string; }) => c.text);
         const payload = {
@@ -166,7 +207,7 @@ async function sendMessage(e: Event) {
             for (const newDesc of returnData) {
                 const existingIndex = imageDescriptions.value.findIndex((imgDesc: ImageDescriptionViewModel) => imgDesc.filename === newDesc.filename);
                 if (existingIndex !== -1) {
-                    imageDescriptions.value[existingIndex] = { ...imageDescriptions.value[existingIndex], ...newDesc };
+                    imageDescriptions.value[existingIndex] = { ...imageDescriptions.value[existingIndex], ...newDesc, dummy: false, loading: false };
                 } else {
                     throw Error("ViewModel index not found. This shouldnt happen since images are always created before processing");
                 }
@@ -197,7 +238,7 @@ async function deleteSelected(params: Event) {
     try {
         const selectedImages = imageDescriptions.value.filter((imgDesc: { delete: any; }) => imgDesc.delete);
         if (selectedImages.length === 0) return;
-
+        setLoadingState(true, selectedImages);
         const payload = {
             taskId: Date.now(),
             ids: selectedImages.map((x: { id: any; }) => ({ id: x.id }))
@@ -235,6 +276,15 @@ function getBrowserLocale() {
 
 function findDuplicates() {
     searchForDuplicates.value = !searchForDuplicates.value;
+}
+
+function setLoadingState(loading: boolean, selectedImages: ImageDescriptionViewModel[]) {
+    selectedImages.forEach((image: ImageDescriptionViewModel) => {
+        const index = imageDescriptions.value.findIndex((imgDesc: ImageDescriptionViewModel) => imgDesc.id === image.id);
+        if (index !== -1) {
+            imageDescriptions.value[index].loading = loading;
+        }
+    });
 }
 
 </script>
@@ -305,59 +355,64 @@ function findDuplicates() {
             <p v-else-if="error">{{ error }}</p>
 
             <div v-if="imageDescriptions.length > 0" :class="`row row-cols-${columnsCount} g-3`">
-                <div class="col" v-for="imgDesc in imageDescriptions" :key="imgDesc.filename">
+                <div class="col" v-for="imgDescVm in imageDescriptions" :key="imgDescVm.filename">
                     <div
-                        :class="`card h-100 text-center position-relative ${imgDesc.delete ? 'border border-danger' : ''}`">
+                        :class="`card h-100 text-center position-relative ${imgDescVm.delete ? 'border border-danger' : ''}`">
 
                         <div class="position-relative">
-                            <img :src="getImageURL(imgDesc.thumbnail_base64)" class="card-img-top img-thumbnail"
-                                alt="Image">
-                            <!-- Each image shows its own spinner if the system is loading -->
-                            <div v-if="loading && !imgDesc.summary" class="spinner-overlay">
-                                <div class="spinner-border text-primary" role="status">
+                            <img v-if="imgDescVm.dummy"
+                                :src="'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2VlZSIvPjwvc3ZnPg=='"
+                                class="card-img-top img-thumbnail" alt="Image">
+                            <img v-else :src="getImageURL(imgDescVm.thumbnail_base64)"
+                                class="card-img-top img-thumbnail" alt="Image">
+
+                            <div v-if="imgDescVm.loading" class="spinner-overlay">
+                                <div class="spinner-border" role="status">
                                     <span class="visually-hidden">Loading...</span>
                                 </div>
                             </div>
+
                         </div>
-                        <button @click.stop="imgDesc.delete = !imgDesc.delete"
+                        <button v-if="!imgDescVm.dummy" @click.stop="imgDescVm.delete = !imgDescVm.delete"
                             class="btn btn-sm btn-outline-secondary position-absolute top-0 end-0 m-2"
                             title="Toggle delete">
-                            <i class="bi bi-trash"></i>
+                            <i class="bi bi-x"></i>
                         </button>
-                        <div v-if="!!imgDesc.scene" class="card-body">
+                        <div v-if="!!imgDescVm.scene" class="card-body">
                             <div class="card-title d-flex justify-content-between align-items-center">
-                                {{ imgDesc.filename }}
+                                {{ imgDescVm.filename }}
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" role="switch" value=""
-                                        :id="`flexCheckDefault-${imgDesc.filename}`" v-model="imgDesc.delete">
-                                    <label class="form-check-label" :for="`flexCheckDefault-${imgDesc.filename}`">
+                                        :id="`flexCheckDefault-${imgDescVm.filename}`" v-model="imgDescVm.delete">
+                                    <label class="form-check-label" :for="`flexCheckDefault-${imgDescVm.filename}`">
                                         <i class="bi bi-trash"></i>
                                     </label>
                                 </div>
                             </div>
-                            <div class="accordion mt-3" :id="`accordionDetails-${imgDesc.filename}`">
+                            <div class="accordion mt-3" :id="`accordionDetails-${imgDescVm.filename}`">
                                 <div class="accordion-item">
-                                    <h2 class="accordion-header" :id="`headingDetails-${imgDesc.filename}`">
+                                    <h2 class="accordion-header" :id="`headingDetails-${imgDescVm.filename}`">
                                         <button class="accordion-button collapsed" type="button"
                                             data-bs-toggle="collapse"
-                                            :data-bs-target="`#collapseDetails-${imgDesc.filename}`"
+                                            :data-bs-target="`#collapseDetails-${imgDescVm.filename}`"
                                             aria-expanded="false"
-                                            :aria-controls="`collapseDetails-${imgDesc.filename}`">
-                                            Quality {{ imgDesc.image_rank }}/10
+                                            :aria-controls="`collapseDetails-${imgDescVm.filename}`">
+                                            Quality {{ imgDescVm.image_rank }}/10
                                         </button>
                                     </h2>
-                                    <div :id="`collapseDetails-${imgDesc.filename}`" class="accordion-collapse collapse"
-                                        :aria-labelledby="`headingDetails-${imgDesc.filename}`">
+                                    <div :id="`collapseDetails-${imgDescVm.filename}`"
+                                        class="accordion-collapse collapse"
+                                        :aria-labelledby="`headingDetails-${imgDescVm.filename}`">
                                         <div class="accordion-body">
 
-                                            <div v-if="imgDesc?.metadata && Object.keys(imgDesc.metadata).length > 0"
+                                            <div v-if="imgDescVm?.metadata && Object.keys(imgDescVm.metadata).length > 0"
                                                 class="card-text">
                                                 {{
-                                                    imgDesc?.metadata["exif"]["0th"]["Make"] || ''
+                                                    imgDescVm?.metadata["exif"]["0th"]["Make"] || ''
                                                 }}
                                                 <div class="vr"></div>
                                                 {{
-                                                    new Date(imgDesc?.metadata["exif"]["0th"]["DateTime"]
+                                                    new Date(imgDescVm?.metadata["exif"]["0th"]["DateTime"]
                                                         .replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3')
                                                         .replace(' ', 'T')).toLocaleString(getBrowserLocale()) || ''
                                                 }}
@@ -366,45 +421,45 @@ function findDuplicates() {
 
                                             <p class="card-text">
                                                 <strong>The Photo:</strong>
-                                                {{ imgDesc?.summary || '' }}
+                                                {{ imgDescVm?.summary || '' }}
                                             </p>
 
-                                            <p v-if="imgDesc?.delete_reason" class="card-text">
+                                            <p v-if="imgDescVm?.delete_reason" class="card-text">
                                                 <strong>Delete Reason:</strong> {{
-                                                    imgDesc?.delete_reason || '' }}
+                                                    imgDescVm?.delete_reason || '' }}
                                             </p>
 
-                                            <p v-if="imgDesc?.keep_reason" class="card-text">
+                                            <p v-if="imgDescVm?.keep_reason" class="card-text">
                                                 <strong>Keep Reason:</strong> {{
-                                                    imgDesc?.keep_reason || ''
+                                                    imgDescVm?.keep_reason || ''
                                                 }}
                                             </p>
-                                            <p v-if="imgDesc?.scene" class="card-text">
+                                            <p v-if="imgDescVm?.scene" class="card-text">
                                                 <strong>Scene:</strong> {{
-                                                    imgDesc?.scene || ''
+                                                    imgDescVm?.scene || ''
                                                 }}
                                             </p>
                                             <p class="card-text">
                                                 <strong>Setting:</strong> {{
-                                                    imgDesc?.setting || ''
+                                                    imgDescVm?.setting || ''
                                                 }}
                                             </p>
-                                            <p v-if="imgDesc?.text_content" class="card-text">
+                                            <p v-if="imgDescVm?.text_content" class="card-text">
                                                 <strong>Text Content:</strong> {{
-                                                    imgDesc?.text_content || ''
+                                                    imgDescVm?.text_content || ''
                                                 }}
                                             </p>
 
-                                            <p v-if="imgDesc?.forencic_analysis" class="card-text">
+                                            <p v-if="imgDescVm?.forencic_analysis" class="card-text">
                                                 <strong>Analysis:</strong> {{
-                                                    imgDesc?.forencic_analysis || ''
+                                                    imgDescVm?.forencic_analysis || ''
                                                 }}
                                             </p>
 
-                                            <div v-if="imgDesc?.objects?.length">
+                                            <div v-if="imgDescVm?.objects?.length">
                                                 <strong>Objects:</strong>
                                                 <div>
-                                                    <ul v-for="object in imgDesc.objects" :key="object.name"
+                                                    <ul v-for="object in imgDescVm.objects" :key="object.name"
                                                         class="list-group">
                                                         <li class="list-group-item d-flex align-items-start">
                                                             <div class="ms-2 me-auto">
@@ -417,9 +472,9 @@ function findDuplicates() {
                                                 </div>
                                             </div>
 
-                                            <p v-if="imgDesc?.quality_criteria" class="card-text">
+                                            <p v-if="imgDescVm?.quality_criteria" class="card-text">
                                                 <strong>Quality Checks:</strong> {{
-                                                    imgDesc?.quality_criteria || ''
+                                                    imgDescVm?.quality_criteria || ''
                                                 }}
                                             </p>
                                         </div>
@@ -431,20 +486,20 @@ function findDuplicates() {
                             <div class="card-title d-flex justify-content-between align-items-center">
                                 <div class="vstack">
                                     <div class="hstack">
-                                        <div class="p-2">
+                                        <!-- <div class="p-2">
                                             <button @click="sendMessage" class="btn btn-outline-primary"
                                                 :disabled="loading">
                                                 <i class="bi bi-eye"></i>
                                             </button>
                                             Analyse
-                                        </div>
+                                        </div> -->
                                         <div class="p-2  ms-auto">
                                             <div class="form-check form-switch">
                                                 <input class="form-check-input" type="checkbox" role="switch" value=""
-                                                    :id="`flexCheckDefault-${imgDesc.filename}`"
-                                                    v-model="imgDesc.delete">
+                                                    :id="`flexCheckDefault-${imgDescVm.filename}`"
+                                                    v-model="imgDescVm.delete">
                                                 <label class="form-check-label"
-                                                    :for="`flexCheckDefault-${imgDesc.filename}`">
+                                                    :for="`flexCheckDefault-${imgDescVm.filename}`">
                                                     <i class="bi bi-trash"></i>
                                                 </label>
 
@@ -452,17 +507,17 @@ function findDuplicates() {
                                         </div>
                                     </div>
                                     <div class="card-text">
-                                        <div class="">{{ imgDesc.filename }}</div>
-                                        <div v-if="imgDesc?.metadata && Object.keys(imgDesc.metadata).length > 0"
-                                            class="card-text">
+                                        <div class="card-text text-secondary">{{ imgDescVm.filename }}</div>
+                                        <div v-if="imgDescVm?.metadata && Object.keys(imgDescVm.metadata).length > 0"
+                                            class="card-text text-secondary">
                                             {{
-                                                new Date(imgDesc?.metadata["exif"]["0th"]["DateTime"]
+                                                new Date(imgDescVm?.metadata["exif"]["0th"]["DateTime"]
                                                     .replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3')
                                                     .replace(' ', 'T')).toLocaleString(getBrowserLocale()) || ''
                                             }}
                                             <div class="vr"></div>
                                             {{
-                                                imgDesc?.metadata["exif"]["0th"]["Make"] || ''
+                                                imgDescVm?.metadata["exif"]["0th"]["Make"] || ''
                                             }}
 
                                             <!-- {{ imgDesc?.metadata }} -->

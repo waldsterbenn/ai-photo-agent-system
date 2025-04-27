@@ -92,6 +92,12 @@ def create_image_description():
     return jsonify(model.dict()), 201
 
 
+@app.route("/image-descriptions-count", methods=["GET"])
+def get_image_description_count():
+    num_rows = len(img_table)
+    return jsonify(num_rows), 200
+
+
 @app.route("/image-descriptions/<int:item_id>", methods=["GET"])
 def get_image_description(item_id):
     Item = Query()

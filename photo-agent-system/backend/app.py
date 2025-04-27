@@ -65,6 +65,14 @@ def process_task():
 """ Endpoint to get list of existing ImageDescriptions """
 
 
+@app.route('/image-descriptions-count', methods=['GET'])
+def get_image_descriptions_count():
+    response = requests.get(f"{get_db_url()}/image-descriptions-count")
+    if response.status_code != 200:
+        return jsonify({"error": "Failed to count image descriptions"}), 500
+    return jsonify(response.json()), 200
+
+
 @app.route('/image-descriptions', methods=['GET'])
 def get_image_descriptions():
     """
