@@ -80,9 +80,23 @@ function getImageURL(image: string): string {
 async function handleImageUpload(event: Event) {
     const target = event.target as HTMLInputElement;
     if (!target.files || target.files.length === 0) return;
-    for (const file of Array.from(target.files)) {
-        try {
 
+    // Create a dummy cards immediately
+    for (const file of Array.from(target.files)) {
+
+        const dummyCard = {
+            id: Date.now(),
+            filename: file.name,
+            // A gray placeholder image
+            thumbnail_base64: 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMzAwIiBoZWlnaHQ9IjIwMCIgZmlsbD0iI2VlZSIvPjwvc3ZnPg==',
+            dummy: true,
+        };
+        imageDescriptions.value.push(dummyCard);
+    }
+
+    for (const file of Array.from(target.files)) {
+
+        try {
             const tool = new ImageTools(compressImgUrl.value);
             const compressionResult = await tool.compressImage(file, maxFileSizeBytes);
             if (compressionResult.compressedSize > maxFileSizeBytes) {
@@ -107,11 +121,16 @@ async function handleImageUpload(event: Event) {
                     headers: { "Content-Type": "multipart/form-data" }
                 }
             );
-            // Optionally update the imageDescriptions array with the response
-            imageDescriptions.value.push(response.data);
+            // Update the dummy card with the server response data
+            const index = imageDescriptions.value.findIndex(img =>
+                img.filename === file.name && img.dummy === true
+            );
+            if (index !== -1) {
+                imageDescriptions.value[index] = { ...response.data, dummy: false };
+            }
         } catch (err) {
             console.error("Image upload error:", err);
-            error.value = (err as Error);
+            error.value = (err as Error).message || JSON.stringify(err);
         }
     }
     target.value = "";
