@@ -12,18 +12,31 @@
                             <router-link to="/api" class="nav-link">A link</router-link>
                         </li> -->
                     </ul>
-                    <div class="d-flex align-items-center">
-                        <i v-if="backendAvailable" class="bi bi-check-circle-fill text-success"
+                    <div class="d-flex align-items-center ms-3">
+                        <div v-if="backendAvailable === undefined" class="spinner-grow spinner-grow-sm" role="status"
+                            title="Backend pending...">
+                            <span class="visually-hidden">Backend pending...</span>
+                        </div>
+                        <i v-else-if="backendAvailable" class="bi bi-check-circle-fill text-success"
                             title="Backend connected"></i>
                         <i v-else class="bi bi-x-circle-fill text-danger" title="Backend disconnected"></i>
                     </div>
                     <div class="d-flex align-items-center ms-3">
-                        <i v-if="agentsAvailable" class="bi bi-check-circle-fill text-success"
+                        <div v-if="agentsAvailable === undefined" class="spinner-grow spinner-grow-sm" role="status"
+                            title="Agent pending...">
+                            <span class="visually-hidden">Agent pending...</span>
+                        </div>
+                        <i v-else-if="agentsAvailable" class="bi bi-check-circle-fill text-success"
                             title="Agent connected"></i>
                         <i v-else class="bi bi-x-circle-fill text-danger" title="Agent disconnected"></i>
                     </div>
                     <div class="d-flex align-items-center ms-3">
-                        <i v-if="dbAvailable" class="bi bi-check-circle-fill text-success" title="DB connected"></i>
+                        <div v-if="dbAvailable === undefined" class="spinner-grow spinner-grow-sm" role="status"
+                            title="DB pending...">
+                            <span class="visually-hidden">DB pending...</span>
+                        </div>
+                        <i v-else-if="dbAvailable" class="bi bi-check-circle-fill text-success"
+                            title="DB connected"></i>
                         <i v-else class="bi bi-x-circle-fill text-danger" title="DB disconnected"></i>
                     </div>
                 </div>
@@ -38,9 +51,9 @@ import axios from 'axios';
 import { computed, onMounted, ref } from 'vue';
 import { backendUrl } from './config/backend_conf';
 
-const backendAvailable = ref(false);
-const agentsAvailable = ref(false);
-const dbAvailable = ref(false);
+const backendAvailable = ref();
+const agentsAvailable = ref();
+const dbAvailable = ref();
 
 console.debug(`Backend URL: ${backendUrl}`);
 
