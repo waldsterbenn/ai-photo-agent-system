@@ -4,6 +4,7 @@ from image_analyst_agent import ImageAnalystAgent
 from datastructures.image_description import ImageDescription
 from datastructures.image_carrier import ImageCarrier
 from datastructures.agent_instruction import AgentInstruction
+from pydantic_core import from_json
 from pydantic import BaseModel
 from infrence_provider.infrence_provider_factory import InferenceProviderFactory
 
@@ -54,13 +55,15 @@ class AgentManager:
 
         response = self.inference.infer(
             prompt=planPrompt, format=Plan.model_json_schema())
-
+        print(f"Plan response: {response}")
         try:
-            plan = Plan.model_validate_json(response)
+            if isinstance(response, dict):
+                plan = Plan.model_validate(response)
+            else:
+                plan = Plan.model_validate_json(response)
         except Exception as e:
             print(f"Error in plan_task: {e}")
-            raise ValueError(
-                f"Failed to parsing json Plan response: {response}")
+            raise ValueError(f"Failed to parse json Plan response: {response}")
 
         for agentInstruction in plan.agentPrompts:
             image = list(

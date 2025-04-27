@@ -54,7 +54,7 @@ export class ImageTools {
                 metadata: metadata,
                 originalSize: originalSize,
                 compressedSize: compressedSize,
-                compressionRatio: (originalSize - compressedSize) / originalSize * 100
+                compressionPercentage: (compressedSize / originalSize) * 100
             };
         } catch (error) {
             console.error('Error compressing image:', error);

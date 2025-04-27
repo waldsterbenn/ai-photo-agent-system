@@ -23,6 +23,8 @@ services:
   frontend:
     build:
         dockerfile: Dockerfile.dev  # Use the development Dockerfile
+    volumes:
+      - ./frontend/src:/app/src
     develop:
         watch:
           - action: sync
@@ -31,6 +33,7 @@ services:
           - action: rebuild
             path: package.json
     command: ["yarn", "dev"]
+    
   backend:
     build:
       dockerfile: Dockerfile.dev  # Use the development Dockerfile

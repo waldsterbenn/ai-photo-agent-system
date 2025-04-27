@@ -41,8 +41,6 @@ services:
     restart: unless-stopped
     ports:
       - "8080:8080"
-    volumes:
-      - ./frontend/src:/app/src
     environment:
       - VITE_APP_BACKEND_URL=http://localhost:5000
     depends_on:

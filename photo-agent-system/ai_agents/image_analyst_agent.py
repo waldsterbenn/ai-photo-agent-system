@@ -17,8 +17,8 @@ class ImageAnalystAgent():
         print("Analysing image")
         prompt = str.join('\n', [self.instruction.prompt,
                                  "If any of these criteria are met, the image should be marked for deletion:",
-                                 self.instruction.criteria],
-                          "Output should strictly follow the provided JSON format.")
+                                 self.instruction.criteria,
+                                 "Output should strictly follow the provided JSON format."])
         message = self.inference.infer(prompt=prompt,
                                        image=self.imageData.thumbnail_base64,
                                        format=ImageDescription.model_json_schema(),
