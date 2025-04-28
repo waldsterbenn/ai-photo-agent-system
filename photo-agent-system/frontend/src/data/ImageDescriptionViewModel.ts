@@ -22,6 +22,7 @@ export class ImageDescriptionViewModel {
     metadata: any;
     loading: boolean;
     id: number;
+    dummy: boolean;
 }
 
 export class QualityCriteriaViewModel {

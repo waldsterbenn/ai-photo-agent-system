@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useAppStateStore } from '@/stores/appStateStore';
-import { watch, computed } from 'vue';
+import { computed, watch } from 'vue';
 
 const appStateStore = useAppStateStore();
 
@@ -31,9 +31,9 @@ const promptText = computed({
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="row mb-3">
-                        <div class="col-md-6">
-                            <h4>Profile</h4>
+                    <div class="row mb-2">
+                        <div class="col card p-2 m-2">
+                            <h5>Profile</h5>
                             <select class="form-select" v-model.number="appStateStore.analysisModal.selectedPromptId">
                                 <option v-for="p in appStateStore.analysisModal.promptsOptions" :key="p.id"
                                     :value="p.id">
@@ -41,8 +41,8 @@ const promptText = computed({
                                 </option>
                             </select>
                         </div>
-                        <div class="col-md-6">
-                            <h4>Card Columns</h4>
+                        <div class="col card p-2 m-2">
+                            <h5>Card Columns</h5>
                             <div class="btn-group flex-wrap">
                                 <button type="button" v-for="n in [1, 2, 3, 4, 5]" :key="n" class="btn" :class="{
                                     'btn-primary': appStateStore.analysisModal.columnsCount === n,
@@ -54,17 +54,19 @@ const promptText = computed({
                         </div>
                     </div>
 
-                    <h4>Prompt</h4>
+                    <h5>Prompt</h5>
                     <textarea class="form-control mb-3" rows="6" v-model="promptText"></textarea>
 
-                    <h4>Deletion criteria</h4>
-                    <div class="btn-group flex-wrap" role="group" aria-label="Deletion criteria">
-                        <button type="button" v-for="(crit, index) in appStateStore.analysisModal.criteria" :key="index"
-                            class="btn m-1"
-                            :class="{ 'btn-primary': crit.selected, 'btn-outline-primary': !crit.selected }"
-                            @click="crit.selected = !crit.selected">
-                            {{ crit.text }}
-                        </button>
+                    <h5>Deletion criteria</h5>
+                    <div class="card">
+                        <div class="btn-group flex-wrap" role="group" aria-label="Deletion criteria">
+                            <button type="button" v-for="(crit, index) in appStateStore.analysisModal.criteria"
+                                :key="index" class="btn m-1"
+                                :class="{ 'btn-primary': crit.selected, 'btn-outline-primary': !crit.selected }"
+                                @click="crit.selected = !crit.selected">
+                                {{ crit.text }}
+                            </button>
+                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">

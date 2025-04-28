@@ -5,7 +5,7 @@ import { defineStore } from "pinia";
 export const useAppStateStore = defineStore('appState', {
     state: () => ({
         loading: false,
-        error:undefined,
+        error: undefined as string | undefined,
         analysisModal: {
             promptsOptions: promptsData.prompts,
             selectedPromptId: promptsData.prompts[0].id,

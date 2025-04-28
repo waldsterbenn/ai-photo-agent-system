@@ -1,13 +1,14 @@
 <script setup lang="ts">
 import { fetchImageDescriptions as fetchApiImageDescriptions } from '@/api/imageDescriptionsApi';
 import { backendUrl } from '@/config/backend_conf';
+import { ImageDescriptionViewModel } from '@/data/ImageDescriptionViewModel';
 import { useAppStateStore } from '@/stores/appStateStore';
 import { useImageDescriptionsStore } from '@/stores/imageDescriptionsStore';
 import { useToolbarStore } from '@/stores/toolbarStore';
 import { getBrowserLocale } from '@/utils/browserLocale';
-import { getImageURL } from '@/utils/getImageURL';
+import { getImageURL } from '@/utils/getImageUrl';
 import axios from 'axios';
-import { onMounted, ref } from 'vue';
+import { onMounted } from 'vue';
 import AnalysisModal from './AnalysisModal.vue';
 import AppStatusPanel from './AppStatusPanel.vue';
 import DuplicateImagesSuspense from './DuplicateImagesSuspense.vue';
@@ -31,7 +32,7 @@ async function makePlaceholderDescriptions() {
             id: i,
             dummy: true,
             loading: true,
-        }));
+        } as ImageDescriptionViewModel));
         imageDescriptionsStore.setImageDescriptions(dummies);
     } catch (err) {
         console.error("Error counting image descriptions:", err);
@@ -44,13 +45,6 @@ onMounted(() => {
     fetchApiImageDescriptions();
 });
 
-function openAnalysisModal() {
-    const modalEl = document.getElementById('analysisModal');
-    if (modalEl) {
-        const modal = new Modal(modalEl);
-        modal.show();
-    }
-}
 </script>
 
 <template>
