@@ -16,7 +16,8 @@
         </button>
 
         <input type="checkbox" class="btn-check" id="btn-check-duplicates" autocomplete="off"
-            v-model="toolbarStore.searchForDuplicates" @click="toolbarStore.findDuplicates()" />
+            :disabled="disableDuplicateBtn" v-model="toolbarStore.searchForDuplicates"
+            @click="toolbarStore.findDuplicates()" />
         <label class="btn btn-secondary p-2" for="btn-check-duplicates">
             Duplicates <i class="bi bi-copy"></i>
         </label>
@@ -61,6 +62,7 @@ const compressImgUrl = `${backendUrl}/compress-image`;
 
 const disableDeleteBtn = computed(() => !imageDescriptionsStore.imageDescriptions.some((x: ImageDescriptionViewModel) => x.delete));
 const disableAnalyzeBtn = computed(() => !imageDescriptionsStore.imageDescriptions.some((imgDesc: ImageDescriptionViewModel) => !imgDesc.summary));
+const disableDuplicateBtn = computed(() => imageDescriptionsStore.imageDescriptions.some((imgDesc: ImageDescriptionViewModel) => imgDesc.loading));
 
 function setDescriptionsLoadingState(loadingState: boolean, selectedImages: ImageDescriptionViewModel[]) {
     selectedImages.forEach((image: ImageDescriptionViewModel) => {

@@ -2,12 +2,12 @@
     <div id="app" class="container">
         <nav class="navbar navbar-expand border mb-2">
             <div class="container-fluid">
-                <a class="navbar-brand" href="#">Photo album</a>
+                <!-- <a class="navbar-brand" href="#">Photo album</a> -->
                 <div class="collapse navbar-collapse">
                     <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                        <li class="nav-item">
+                        <!-- <li class="nav-item">
                             <router-link to="/" class="nav-link">Main</router-link>
-                        </li>
+                        </li> -->
                         <!-- <li class="nav-item">
                             <router-link to="/api" class="nav-link">A link</router-link>
                         </li> -->

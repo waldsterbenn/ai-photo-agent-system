@@ -1,4 +1,4 @@
-import { deleteSelectedImages } from '@/api/deleteSelectedImages';
+import { deleteSelectedImages } from '@/api/deleteSelectedImagesApi';
 import { ImageDescriptionViewModel } from '@/data/ImageDescriptionViewModel';
 import { defineStore } from 'pinia';
 import { useImageDescriptionsStore } from './imageDescriptionsStore';
