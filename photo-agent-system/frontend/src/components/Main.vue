@@ -420,17 +420,17 @@ function setLoadingState(loading: boolean, selectedImages: ImageDescriptionViewM
                                             </div>
 
                                             <p class="card-text">
-                                                <strong>The Photo:</strong>
+                                                <strong>Photo:</strong>
                                                 {{ imgDescVm?.summary || '' }}
                                             </p>
 
                                             <p v-if="imgDescVm?.delete_reason" class="card-text">
-                                                <strong>Delete Reason:</strong> {{
+                                                <strong>Delete:</strong> {{
                                                     imgDescVm?.delete_reason || '' }}
                                             </p>
 
                                             <p v-if="imgDescVm?.keep_reason" class="card-text">
-                                                <strong>Keep Reason:</strong> {{
+                                                <strong>Keep:</strong> {{
                                                     imgDescVm?.keep_reason || ''
                                                 }}
                                             </p>
