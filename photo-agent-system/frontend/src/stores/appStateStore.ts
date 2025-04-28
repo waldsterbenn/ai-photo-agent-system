@@ -4,6 +4,7 @@ import { defineStore } from "pinia";
 
 export const useAppStateStore = defineStore('appState', {
     state: () => ({
+        allSystemsNominal: false,
         loading: false,
         error: undefined as string | undefined,
         analysisModal: {

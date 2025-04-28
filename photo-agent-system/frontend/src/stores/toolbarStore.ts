@@ -1,5 +1,6 @@
 import { deleteSelectedImages } from '@/api/deleteSelectedImagesApi';
 import { ImageDescriptionViewModel } from '@/data/ImageDescriptionViewModel';
+import { Modal } from 'bootstrap';
 import { defineStore } from 'pinia';
 import { useImageDescriptionsStore } from './imageDescriptionsStore';
 
@@ -18,7 +19,6 @@ export const useToolbarStore = defineStore('toolbar', {
         openAnalysisModal() {
             const modalEl = document.getElementById('analysisModal');
             if (modalEl) {
-                // eslint-disable-next-line no-undef
                 new Modal(modalEl).show();
             }
         },

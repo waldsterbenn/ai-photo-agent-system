@@ -16,7 +16,7 @@ export async function fetchImageDescriptions(): Promise<void> {
             id: i,
             dummy: true,
             loading: true,
-        }));
+        } as ImageDescriptionViewModel));
         imageDescriptionsStore.setImageDescriptions(dummies);
 
         const response = await axios.get(`${backendUrl}/image-descriptions`);

@@ -5,29 +5,30 @@
             @change="handleImageUpload" />
 
         <!-- Gear icon button to open analysis modal -->
-        <button @click="openAnalysisModalLocal" class="btn btn-secondary-subtle p-2" title="Analysis Settings">
+        <button @click="toolbarStore.openAnalysisModal" class="btn btn-secondary-subtle p-2" title="Analysis Settings">
             <i class="bi bi-gear"></i>
         </button>
 
         <!-- Button to trigger image picker -->
         <button @click="toolbarStore.triggerImagePicker(imageInput)" class="btn btn-secondary p-2 ms-auto"
-            title="Upload a photo">
+            :disabled="!appStateStore.allSystemsNominal" title="Upload a photo">
             <i class="bi bi-image"></i> Select Photos
         </button>
 
         <input type="checkbox" class="btn-check" id="btn-check-duplicates" autocomplete="off"
-            :disabled="disableDuplicateBtn" v-model="toolbarStore.searchForDuplicates"
-            @click="toolbarStore.findDuplicates()" />
+            :disabled="disableDuplicateBtn || !appStateStore.allSystemsNominal"
+            v-model="toolbarStore.searchForDuplicates" @click="toolbarStore.findDuplicates()" />
         <label class="btn btn-secondary p-2" for="btn-check-duplicates">
             Duplicates <i class="bi bi-copy"></i>
         </label>
 
         <button @click="onDeleteSelected" class="btn btn-secondary p-2" title="Delete selected photos"
-            :disabled="disableDeleteBtn">
+            :disabled="disableDeleteBtn || !appStateStore.allSystemsNominal">
             <i class="bi bi-trash"></i>
         </button>
 
-        <button @click="analyzePhotos" class="btn btn-primary p-2" :disabled="disableAnalyzeBtn"
+        <button @click="analyzePhotos" class="btn btn-primary p-2"
+            :disabled="disableAnalyzeBtn || !appStateStore.allSystemsNominal"
             :title="disableAnalyzeBtn ? 'Working' : 'Nothing to analyse'">
             <span v-if="appLoading" class="spinner-border spinner-border-sm me-2" title="Working" role="status"
                 aria-hidden="true"></span>
@@ -46,7 +47,6 @@ import { useAppStateStore } from '@/stores/appStateStore';
 import { useImageDescriptionsStore } from '@/stores/imageDescriptionsStore';
 import { useToolbarStore } from '@/stores/toolbarStore';
 import { ImageTools } from '@/tools/ImageTools';
-import { Modal } from 'bootstrap';
 import { computed, ref } from 'vue';
 
 const toolbarStore = useToolbarStore();
@@ -181,21 +181,6 @@ async function analyzePhotos() {
         appStateStore.loading = false;
     }
 }
-
-// New function to open the Analysis Modal panel
-function openAnalysisModalLocal() {
-    const modalEl = document.getElementById('analysisModal');
-    if (modalEl) {
-        const modal = new Modal(modalEl);
-        modal.show();
-    }
-}
 </script>
 
-<style scoped>
-.vr {
-    border-left: 1px solid #dee2e6;
-    height: 100%;
-    margin: 0 1rem;
-}
-</style>
+<style scoped></style>

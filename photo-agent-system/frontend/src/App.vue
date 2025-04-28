@@ -47,15 +47,21 @@
 </template>
 
 <script lang="ts" setup>
+import { useAppStateStore } from '@/stores/appStateStore';
 import axios from 'axios';
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { backendUrl } from './config/backend_conf';
+console.debug(`Backend URL: ${backendUrl}`);
+
+const appStateStore = useAppStateStore();
 
 const backendAvailable = ref();
 const agentsAvailable = ref();
 const dbAvailable = ref();
 
-console.debug(`Backend URL: ${backendUrl}`);
+watch([backendAvailable, agentsAvailable, dbAvailable], () => {
+    appStateStore.allSystemsNominal = backendAvailable.value && agentsAvailable.value && dbAvailable.value;
+});
 
 const backendStatusUrl = computed(() => `${backendUrl}/api`);
 const agentStatusUrl = computed(() => `${backendUrl}/agent-status`);
@@ -67,12 +73,12 @@ onMounted(() => {
             // Assume a successful response means the backend is available.
             backendAvailable.value = true;
             console.debug(`Backend connected (${backendStatusUrl})`, response?.data ?? "No message");
-
         })
         .catch(error => {
             // On error, mark the backend as unavailable.
             backendAvailable.value = false;
             console.error(`Backend failed (${backendStatusUrl})`, error);
+            appStateStore.error = error.message || JSON.stringify(error);
         });
 
     axios.get(agentStatusUrl.value)
@@ -84,7 +90,8 @@ onMounted(() => {
         .catch(error => {
             // On error, mark the backend as unavailable.
             agentsAvailable.value = false;
-            console.error(`Agent connected (${agentStatusUrl})`, error);
+            console.error(`Agent failed (${agentStatusUrl})`, error);
+            appStateStore.error = error.message || JSON.stringify(error);
         });
 
     axios.get(dbStatusUrl.value)
@@ -96,7 +103,8 @@ onMounted(() => {
         .catch(error => {
             // On error, mark the backend as unavailable.
             dbAvailable.value = false;
-            console.error(`DB connected (${dbStatusUrl})`, error);
+            console.error(`DB failed (${dbStatusUrl})`, error);
+            appStateStore.error = error.message || JSON.stringify(error);
         });
 });
 
