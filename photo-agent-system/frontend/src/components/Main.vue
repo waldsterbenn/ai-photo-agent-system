@@ -91,9 +91,12 @@ function openAnalysisModal() {
                             <i class="bi bi-x"></i>
                         </button>
                         <div v-if="!!imgDescVm.scene" class="card-body">
-                            <div class="card-title d-flex justify-content-between align-items-center">
-                                <div class="card-text text-secondary">{{ imgDescVm.filename }}</div>
-                                <div class="form-check form-switch">
+                            <div class="card-title align-items-center hstack gap-3">
+                                <div class="card-text text-secondary text-truncate" :title="imgDescVm.filename">
+                                    {{
+                                        imgDescVm.filename }}
+                                </div>
+                                <div class="form-check form-switch ms-auto">
                                     <input class="form-check-input" type="checkbox" role="switch" value=""
                                         :id="`flexCheckDefault-${imgDescVm.filename}`" v-model="imgDescVm.delete">
                                     <label class="form-check-label" :for="`flexCheckDefault-${imgDescVm.filename}`">
