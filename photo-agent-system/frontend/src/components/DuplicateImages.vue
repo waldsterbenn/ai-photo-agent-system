@@ -2,7 +2,7 @@
 
 import { DuplicateFinder } from '@/tools/DuplicateFinder';
 import { getBrowserLocale } from '@/utils/browserLocale';
-import { getImageURL } from '@/utils/getImageURL';
+import { getImageUrl } from '@/utils/getImageUrl';
 import { computed } from 'vue';
 
 interface Props {
@@ -30,7 +30,7 @@ const duplicateClusters = computed(() => {
                     <div class="hstack">
                         <div class="m-2" v-for="imgDesc in cluster.images" :key="imgDesc.filename">
                             <div :class="`card ${imgDesc.delete ? 'border border-danger' : ''}`">
-                                <img :src="getImageURL(imgDesc.thumbnail_base64)" class="card-img-top img-thumbnail"
+                                <img :src="getImageUrl(imgDesc.thumbnail_base64)" class="card-img-top img-thumbnail"
                                     alt="Image">
                                 <button @click.stop="imgDesc.delete = !imgDesc.delete"
                                     class="btn btn-sm btn-primary m-2" title="Toggle delete">
