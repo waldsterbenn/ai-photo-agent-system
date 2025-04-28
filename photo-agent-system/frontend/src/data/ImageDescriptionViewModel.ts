@@ -21,6 +21,7 @@ export class ImageDescriptionViewModel {
     quality_criteria: QualityCriteriaViewModel;
     metadata: any;
     loading: boolean;
+    id: number;
 }
 
 export class QualityCriteriaViewModel {

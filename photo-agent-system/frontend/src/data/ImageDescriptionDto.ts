@@ -20,6 +20,7 @@ export class ImageDescriptionDto {
     forencic_analysis: string;
     quality_criteria: QualityCriteriaDto;
     metadata: any;
+    
 }
 
 export class QualityCriteriaDto {

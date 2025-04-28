@@ -1,87 +1,23 @@
 <script setup lang="ts">
-import axios from 'axios';
-import { defineAsyncComponent } from 'vue';
-// Import Bootstrap Modal from bootstrap's JS distribution
+import { fetchImageDescriptions as fetchApiImageDescriptions } from '@/api/imageDescriptionsApi';
 import { backendUrl } from '@/config/backend_conf';
-import * as criteriaData from '@/config/criteria.json';
-import * as promptsData from '@/config/prompts.json';
-import { ImageDescriptionDto } from '@/data/ImageDescriptionDto';
-import { ImageDescriptionViewModel } from '@/data/ImageDescriptionViewModel';
-import { ImageTools } from '@/tools/ImageTools';
-import Modal from 'bootstrap/js/dist/modal';
-import { computed, onMounted, ref, toRaw, watch } from 'vue';
+import { useAppStateStore } from '@/stores/appStateStore';
+import { useImageDescriptionsStore } from '@/stores/imageDescriptionsStore';
+import { useToolbarStore } from '@/stores/toolbarStore';
+import { getBrowserLocale } from '@/utils/browserLocale';
+import { getImageURL } from '@/utils/getImageURL';
+import axios from 'axios';
+import { onMounted, ref } from 'vue';
+import AnalysisModal from './AnalysisModal.vue';
+import AppStatusPanel from './AppStatusPanel.vue';
+import DuplicateImagesSuspense from './DuplicateImagesSuspense.vue';
 import Toolbar from './Toolbar.vue';
 
+const toolbarStore = useToolbarStore();
+const imageDescriptionsStore = useImageDescriptionsStore();
+const appStateStore = useAppStateStore();
 
-// Import DuplicateImages component asynchronously
-const DuplicateImages = defineAsyncComponent(() => import('./DuplicateImages.vue'));
-const searchForDuplicates = ref<boolean>(false);
-
-const processUrl = computed(() => `${backendUrl}/processtask`);
-const deleteUrl = computed(() => `${backendUrl}/delete-image-descriptions`);
-const compressImgUrl = computed(() => `${backendUrl}/compress-image`);
-const imageDescriptions = ref<ImageDescriptionViewModel[]>([]); // Ensure descriptions include a "filename" property if available.
-const loading = ref(false);
-const error = ref('');
-const imageInput = ref<HTMLInputElement | null>(null);
-const columnsCount = ref(3);
-
-const maxFileSizeBytes = 2 * 1024 * 1024; // MB
-const duplicateTimeThresholdMs = 10 * 1000; // milliseconds
-
-// Import prompt options and set the default prompt
-const promptsOptions = ref(promptsData.prompts);
-const selectedPromptId = ref<number>(promptsOptions.value[0].id);
-const taskPrompt = promptsOptions.value[0].prompt;
-const prompt = ref(taskPrompt);
-
-// Update criteria: convert array of strings to objects with selected=true
-const criteriaSingleImagePrompt = criteriaData.criteria;
-const criteria = ref(
-    criteriaSingleImagePrompt.map((crit: string) => ({
-        text: crit,
-        selected: true
-    }))
-);
-
-// Update the main prompt when a new prompt is selected.
-watch(selectedPromptId, (selectedId: number) => {
-    const selected = promptsOptions.value.find((p: { id: number; }) => p.id === selectedId);
-    if (selected) {
-        prompt.value = selected.prompt;
-    }
-});
-
-// Get existing ImageDescriptions from backend and set them to the imageDescriptions ref.
-async function fetchImageDescriptions() {
-    console.log("Fetching image descriptions...");
-    try {
-        const count = await axios.get(`${backendUrl}/image-descriptions-count`);
-        if (count.data === 0) {
-            return;
-        }
-
-        // Create a dummy cards immediately
-        const range = Array.from({ length: count.data }, (_, i) => i);
-        const dummies = range.map((i) =>
-        ({
-            id: i,
-            dummy: true,
-            loading: true,
-        }));
-        imageDescriptions.value = dummies;
-
-        const response = await axios.get(`${backendUrl}/image-descriptions`);
-        if (response.data.length === 0) {
-            return;
-        }
-        imageDescriptions.value = response.data.map((desc: any) => Object.assign(new ImageDescriptionViewModel(), desc));
-
-    } catch (err) {
-        console.error("Error fetching image descriptions:", err);
-        error.value = (err as Error);
-    }
-}
+const duplicateTimeThresholdMs = 10 * 1000;
 
 async function makePlaceholderDescriptions() {
     console.log("Counting image descriptions...");
@@ -91,171 +27,22 @@ async function makePlaceholderDescriptions() {
             return;
         }
         const range = Array.from({ length: count.data }, (_, i) => i);
-        const dummies = range.map((i) =>
-        ({
+        const dummies = range.map((i) => ({
             id: i,
             dummy: true,
             loading: true,
         }));
-        imageDescriptions.value = dummies;
+        imageDescriptionsStore.setImageDescriptions(dummies);
     } catch (err) {
         console.error("Error counting image descriptions:", err);
-        error.value = (err as Error);
+        appStateStore.error = (err as Error).message || JSON.stringify(err);
     }
 }
 
-// Fetch image descriptions on component mount
 onMounted(() => {
-    makePlaceholderDescriptions(); //Quick
-    fetchImageDescriptions() //Slow
+    makePlaceholderDescriptions();
+    fetchApiImageDescriptions();
 });
-
-function triggerImagePicker() {
-    imageInput.value?.click();
-}
-
-function getImageURL(image: string): string {
-    return image.startsWith('data:') ? image : `data:image/png;base64,${image}`;
-}
-
-async function handleImageUpload(event: Event) {
-    const target = event.target as HTMLInputElement;
-    if (!target.files || target.files.length === 0) return;
-
-    // Create a dummy cards immediately
-    for (const file of Array.from(target.files)) {
-
-        const dummyCard = {
-            id: Date.now(),
-            filename: file.name,
-            dummy: true,
-            loading: true,
-        };
-        imageDescriptions.value.push(dummyCard);
-    }
-
-    for (const file of Array.from(target.files)) {
-
-        try {
-            const tool = new ImageTools(compressImgUrl.value);
-            const compressionResult = await tool.compressImage(file, maxFileSizeBytes);
-            if (compressionResult.compressedSize > maxFileSizeBytes) {
-                throw new Error("Image compression failed, its too big to analyse.");
-            }
-
-            const descriptionPayload = new ImageDescriptionDto();
-            descriptionPayload.filename = file.name;
-            descriptionPayload.thumbnail_base64 = compressionResult.compressImageBase64;
-            descriptionPayload.metadata = compressionResult.metadata;
-
-            // Prepare multipart/form-data
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('description', JSON.stringify(descriptionPayload));
-
-            // Call create-image-description endpoint
-            const response = await axios.post(
-                `${backendUrl}/create-image-description`,
-                formData,
-                {
-                    headers: { "Content-Type": "multipart/form-data" }
-                }
-            );
-            // Update the dummy card with the server response data
-            const index = imageDescriptions.value.findIndex(img =>
-                img.filename === file.name && img.dummy === true
-            );
-            if (index !== -1) {
-                imageDescriptions.value[index] = { ...response.data, dummy: false, loading: false };
-            }
-        } catch (err) {
-            console.error("Image upload error:", err);
-            error.value = (err as Error).message || JSON.stringify(err);
-        }
-    }
-    target.value = "";
-}
-
-async function sendMessage(e: Event) {
-    loading.value = true;
-    error.value = "";
-    try {
-        const taskId = Date.now();
-
-        // Crude way of checking if the image is being processed or not. TODO: Improve this.
-        const filteredImages = imageDescriptions.value
-            .map((imgDesc: ImageDescriptionViewModel) => toRaw(imgDesc))
-            .filter((imgDesc: ImageDescriptionViewModel) => !imgDesc.summary);
-
-        if (filteredImages.length === 0) {
-            loading.value = false;
-            return;
-        }
-        setLoadingState(true, filteredImages);
-
-        // Only include criteria that are selected
-        const selectedCriteria = criteria.value.filter((c: { selected: boolean; }) => c.selected).map((c: { text: string; }) => c.text);
-        const payload = {
-            taskId: taskId,
-            taskPrompt: prompt.value.join('\n'),
-            criteria: selectedCriteria,
-            images: filteredImages
-        };
-        const response = await axios.post(processUrl.value, payload);
-        const data = response.data;
-        if (data.status === "success" && taskId === data.taskId) {
-            const returnData = JSON.parse(data.result);
-            for (const newDesc of returnData) {
-                const existingIndex = imageDescriptions.value.findIndex((imgDesc: ImageDescriptionViewModel) => imgDesc.filename === newDesc.filename);
-                if (existingIndex !== -1) {
-                    imageDescriptions.value[existingIndex] = { ...imageDescriptions.value[existingIndex], ...newDesc, dummy: false, loading: false };
-                } else {
-                    throw Error("ViewModel index not found. This shouldnt happen since images are always created before processing");
-                }
-
-                try {
-                    const imgDescDto = Object.assign(new ImageDescriptionDto(), imageDescriptions.value[existingIndex]);
-                    await axios.put(`${backendUrl}/update-image-description`, { description: imgDescDto }, {
-                        headers: { "Content-Type": "application/json" }
-                    });
-                } catch (err) {
-                    error.value = (err as Error).stack ? (err as Error).message : JSON.stringify(err);
-                    console.error("Error updating image description:", err);
-                }
-            }
-        } else {
-            error.value = data.error;
-        }
-    } catch (err) {
-        error.value = (err as Error).stack ? (err as Error).message : JSON.stringify(err);
-    } finally {
-        loading.value = false;
-    }
-}
-
-async function deleteSelected(params: Event) {
-    loading.value = true;
-    error.value = "";
-    try {
-        const selectedImages = imageDescriptions.value.filter((imgDesc: { delete: any; }) => imgDesc.delete);
-        if (selectedImages.length === 0) return;
-        setLoadingState(true, selectedImages);
-        const payload = {
-            taskId: Date.now(),
-            ids: selectedImages.map((x: { id: any; }) => ({ id: x.id }))
-        };
-        const response = await axios.delete(deleteUrl.value, { data: payload });
-        if (response.status === 200) {
-            imageDescriptions.value = imageDescriptions.value.filter((image: { delete: any; }) => !image.delete);
-        } else {
-            error.value = data.error;
-        }
-    } catch (err) {
-        error.value = (err as Error).stack ? (err as Error).message : JSON.stringify(err);
-    } finally {
-        loading.value = false;
-    }
-}
 
 function openAnalysisModal() {
     const modalEl = document.getElementById('analysisModal');
@@ -264,66 +51,23 @@ function openAnalysisModal() {
         modal.show();
     }
 }
-
-function getBrowserLocale() {
-    let lang;
-    if (navigator.languages && navigator.languages.length) {
-        lang = navigator.languages;
-    }
-    lang = navigator.language;
-    return "da-DK"; //TODO make this selectable from browsers languages or custom list
-
-}
-
-function findDuplicates() {
-    searchForDuplicates.value = !searchForDuplicates.value;
-}
-
-function setLoadingState(loading: boolean, selectedImages: ImageDescriptionViewModel[]) {
-    selectedImages.forEach((image: ImageDescriptionViewModel) => {
-        const index = imageDescriptions.value.findIndex((imgDesc: ImageDescriptionViewModel) => imgDesc.id === image.id);
-        if (index !== -1) {
-            imageDescriptions.value[index].loading = loading;
-        }
-    });
-}
-
 </script>
 
 <template>
     <div class="container-fluid d-flex flex-column h-100 bg-secondary-subtle">
         <!-- Toolbar -->
-        <Toolbar @handleImageUpload="handleImageUpload" @openAnalysisModal="openAnalysisModal"
-            @triggerImagePicker="triggerImagePicker" @findDuplicates="findDuplicates" @deleteSelected="deleteSelected"
-            @sendMessage="sendMessage" />
-
+        <Toolbar />
         <div>
-            <Suspense v-if="searchForDuplicates">
-                <div class="content flex-grow-1 p-2 bg-secondary">
-                    <!-- Replace duplicate logic with the new async component -->
-                    <DuplicateImages :imageDescriptions="imageDescriptions" :getImageURL="getImageURL"
-                        :getBrowserLocale="getBrowserLocale" :duplicateTimeThresholdMs="duplicateTimeThresholdMs" />
-                </div>
-                <template #fallback>
-
-                    <div class="text-center">
-                        <div class="d-flex align-items-center">
-                            <strong role="status">Searching for duplicates...</strong>
-                            <div class="spinner-border ms-auto" aria-hidden="true"></div>
-                        </div>
-                    </div>
-                </template>
-            </Suspense>
+            <DuplicateImagesSuspense v-if="toolbarStore.searchForDuplicates"
+                :duplicateTimeThresholdMs="duplicateTimeThresholdMs" />
         </div>
         <div class="hr"></div>
         <!-- Content area -->
-
         <div class="content flex-grow-1 p-2">
-            <p v-if="loading">Working...</p>
-            <p v-else-if="error">{{ error }}</p>
-
-            <div v-if="imageDescriptions.length > 0" :class="`row row-cols-${columnsCount} g-3`">
-                <div class="col" v-for="imgDescVm in imageDescriptions" :key="imgDescVm.filename">
+            <AppStatusPanel />
+            <div v-if="imageDescriptionsStore.imageDescriptions.length > 0"
+                :class="`row row-cols-${appStateStore.analysisModal.columnsCount} g-3`">
+                <div class="col" v-for="imgDescVm in imageDescriptionsStore.imageDescriptions" :key="imgDescVm.id">
                     <div
                         :class="`card h-100 text-center position-relative ${imgDescVm.delete ? 'border border-danger' : ''}`">
 
@@ -348,7 +92,7 @@ function setLoadingState(loading: boolean, selectedImages: ImageDescriptionViewM
                         </button>
                         <div v-if="!!imgDescVm.scene" class="card-body">
                             <div class="card-title d-flex justify-content-between align-items-center">
-                                {{ imgDescVm.filename }}
+                                <div class="card-text text-secondary">{{ imgDescVm.filename }}</div>
                                 <div class="form-check form-switch">
                                     <input class="form-check-input" type="checkbox" role="switch" value=""
                                         :id="`flexCheckDefault-${imgDescVm.filename}`" v-model="imgDescVm.delete">
@@ -454,13 +198,6 @@ function setLoadingState(loading: boolean, selectedImages: ImageDescriptionViewM
                             <div class="card-title d-flex justify-content-between align-items-center">
                                 <div class="vstack">
                                     <div class="hstack">
-                                        <!-- <div class="p-2">
-                                            <button @click="sendMessage" class="btn btn-outline-primary"
-                                                :disabled="loading">
-                                                <i class="bi bi-eye"></i>
-                                            </button>
-                                            Analyse
-                                        </div> -->
                                         <div class="p-2  ms-auto">
                                             <div class="form-check form-switch">
                                                 <input class="form-check-input" type="checkbox" role="switch" value=""
@@ -501,49 +238,7 @@ function setLoadingState(loading: boolean, selectedImages: ImageDescriptionViewM
         </div>
     </div>
 
-    <!-- Analysis Modal -->
-    <div class="modal fade" id="analysisModal" tabindex="-1" aria-labelledby="analysisModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="analysisModalLabel">Configuration</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <h4>Profile</h4>
-                    <select class="form-select mb-3" v-model.number="selectedPromptId">
-                        <option v-for="p in promptsOptions" :key="p.id" :value="p.id">
-                            {{ p.name }}
-                        </option>
-                    </select>
-                    <h4 class="mt-3">Card Columns</h4>
-                    <select class="form-select mb-3" v-model.number="columnsCount">
-                        <option v-for="n in [1, 2, 3, 4, 5]" :key="n" :value="n">{{ n }}</option>
-                    </select>
-
-                    <h4>Prompt</h4>
-                    <ul class="">
-                        <li v-for="(pr, index) in prompt" :key="index">
-                            <div class="">{{ pr }}</div>
-                        </li>
-                    </ul>
-
-                    <h4>Deletion criteria</h4>
-                    <ul class="list-group m-2">
-                        <li v-for="(crit, index) in criteria" :key="index"
-                            class="list-group-item d-flex align-items-center">
-                            <input type="checkbox" v-model="crit.selected" class="form-check-input me-2"
-                                :id="`criteria-${index}`" />
-                            <label :for="`criteria-${index}`" class="mb-0">{{ crit.text }}</label>
-                        </li>
-                    </ul>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Ok</button>
-                </div>
-            </div>
-        </div>
-    </div>
+    <AnalysisModal />
 </template>
 
 <style scoped lang="css">

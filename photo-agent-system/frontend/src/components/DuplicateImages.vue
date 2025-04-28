@@ -1,22 +1,21 @@
 <script setup lang="ts">
 
-import { ImageDescriptionViewModel } from '@/data/ImageDescriptionViewModel';
 import { DuplicateFinder } from '@/tools/DuplicateFinder';
+import { getBrowserLocale } from '@/utils/browserLocale';
+import { getImageURL } from '@/utils/getImageURL';
 import { computed } from 'vue';
 
 interface Props {
-    imageDescriptions: ImageDescriptionViewModel[];
-    getImageURL: (image: string) => string;
-    getBrowserLocale: () => string;
     duplicateTimeThresholdMs?: number;
 }
-
 const props = defineProps<Props>();
 
-const threshold = props.duplicateTimeThresholdMs ?? 10000; // default 10 seconds
+import { useImageDescriptionsStore } from '@/stores/imageDescriptionsStore';
+const imageDescriptionsStore = useImageDescriptionsStore();
+
 //await new Promise(resolve => setTimeout(resolve, 5000)); // Simulate a delay for the sake of example
 const duplicateClusters = computed(() => {
-    return new DuplicateFinder(threshold).findDuplicates(props.imageDescriptions);
+    return new DuplicateFinder(props.duplicateTimeThresholdMs).findDuplicates(imageDescriptionsStore.imageDescriptions);
 });
 </script>
 
@@ -26,7 +25,7 @@ const duplicateClusters = computed(() => {
             <div class="col m-2">
                 <div class="card text-center">
                     <div class="card-header">
-                        Duplicated images ({{ new Date(cluster.time).toLocaleString(getBrowserLocale()) }})
+                        Duplicates ({{ new Date(cluster.time).toLocaleString(getBrowserLocale()) }})
                     </div>
                     <div class="hstack">
                         <div class="m-2" v-for="imgDesc in cluster.images" :key="imgDesc.filename">
