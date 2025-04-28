@@ -105,7 +105,7 @@ async function handleImageUpload(event: Event) {
             filename: file.name,
             dummy: true,
             loading: true,
-        };
+        } as ImageDescriptionViewModel;
         imageDescriptionsStore.addImageDescription(dummyCard);
     }
 
@@ -128,7 +128,14 @@ async function handleImageUpload(event: Event) {
             descriptionPayload.metadata = compressionResult.metadata;
 
             const data = await uploadImage(file, descriptionPayload);
-            imageDescriptionsStore.updateImageDescription(file.name, { ...data, dummy: false, loading: false });
+            imageDescriptionsStore.updateImageDescription({
+                ...data,
+                filename: file.name,
+                dummy: false,
+                loading: false,
+                size_compressed_mb: compressionResult.compressedSize,
+                size_uncompressed_mb: compressionResult.originalSize
+            } as ImageDescriptionViewModel);
         } catch (err) {
             console.error("Image upload error:", err);
             appStateStore.error = (err as Error).message || JSON.stringify(err);
@@ -153,7 +160,7 @@ async function analyzePhotos() {
         appStateStore.loading = false;
         return;
     }
-
+    setDescriptionsLoadingState(true, filteredImages);
     try {
         const data = await processPhotos(taskId, appStateStore.getPrompt(), appStateStore.getSelectedCriteria(), filteredImages);
         if (data.status === "success" && taskId === data.taskId) {

@@ -19,12 +19,13 @@ export const useImageDescriptionsStore = defineStore('imageDescriptions', {
         updateImageDescription(updatedData: Partial<ImageDescriptionViewModel>):ImageDescriptionViewModel|undefined {
             const index = this.imageDescriptions.findIndex((desc) => desc.filename === updatedData.filename);
             if (index !== -1) {
-                this.imageDescriptions[index] = {
+                const newLocal = {
                     ...this.imageDescriptions[index],
                     ...updatedData,
                     dummy: false,
                     loading: false,
-                };
+                } as ImageDescriptionViewModel;
+                this.imageDescriptions[index] = newLocal;
                 return this.imageDescriptions[index];
             }
             return undefined;

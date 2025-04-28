@@ -23,6 +23,8 @@ export class ImageDescriptionViewModel {
     loading: boolean;
     id: number;
     dummy: boolean;
+    size_compressed_mb: number;
+    size_uncompressed_mb: number;
 }
 
 export class QualityCriteriaViewModel {

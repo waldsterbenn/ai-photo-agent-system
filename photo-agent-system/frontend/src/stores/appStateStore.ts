@@ -27,7 +27,7 @@ export const useAppStateStore = defineStore('appState', {
         getSelectedCriteria() {
             return this.analysisModal.criteria.filter((c: { selected: boolean }) => c.selected).map((c: { text: string }) => c.text);
         },
-        getPrompt():string {
+        getPrompt():string[] {
             const selected = this.analysisModal.promptsOptions.find((p: { id: number }) => p.id === this.analysisModal.selectedPromptId);
             if (selected) {
                 return selected.prompt;

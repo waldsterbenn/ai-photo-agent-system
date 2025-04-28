@@ -87,8 +87,7 @@ onMounted(() => {
                         <div v-if="!!imgDescVm.scene" class="card-body">
                             <div class="card-title align-items-center hstack gap-3">
                                 <div class="card-text text-secondary text-truncate" :title="imgDescVm.filename">
-                                    {{
-                                        imgDescVm.filename }}
+                                    {{ imgDescVm.filename }}
                                 </div>
                                 <div class="form-check form-switch ms-auto">
                                     <input class="form-check-input" type="checkbox" role="switch" value=""
@@ -115,17 +114,20 @@ onMounted(() => {
                                         <div class="accordion-body">
 
                                             <div v-if="imgDescVm?.metadata && Object.keys(imgDescVm.metadata).length > 0"
-                                                class="card-text">
-                                                {{
-                                                    imgDescVm?.metadata["exif"]["0th"]["Make"] || ''
-                                                }}
+                                                class="card-text  m-2">
+                                                {{ imgDescVm?.size_uncompressed_mb }}Mb
                                                 <div class="vr"></div>
                                                 {{
                                                     new Date(imgDescVm?.metadata["exif"]["0th"]["DateTime"]
                                                         .replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3')
                                                         .replace(' ', 'T')).toLocaleString(getBrowserLocale()) || ''
                                                 }}
-                                                <!-- {{ imgDesc?.metadata }} -->
+                                                <div class="vr"></div>
+                                                {{
+                                                    imgDescVm?.metadata["exif"]["0th"]["Make"] || ''
+                                                }}
+
+                                                <!-- {{ imgDescVm?.metadata }} -->
                                             </div>
 
                                             <p class="card-text">
@@ -186,6 +188,8 @@ onMounted(() => {
                                                     imgDescVm?.quality_criteria || ''
                                                 }}
                                             </p>
+
+
                                         </div>
                                     </div>
                                 </div>
@@ -194,8 +198,9 @@ onMounted(() => {
                         <div v-else class="card-body">
                             <div class="card-title d-flex justify-content-between align-items-center">
                                 <div class="vstack">
-                                    <div class="hstack">
-                                        <div class="p-2  ms-auto">
+                                    <div class="hstack gap-3">
+                                        <div class="card-text text-secondary">{{ imgDescVm.filename }}</div>
+                                        <div class="ms-auto">
                                             <div class="form-check form-switch">
                                                 <input class="form-check-input" type="checkbox" role="switch" value=""
                                                     :id="`flexCheckDefault-${imgDescVm.filename}`"
@@ -208,10 +213,11 @@ onMounted(() => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="card-text">
-                                        <div class="card-text text-secondary">{{ imgDescVm.filename }}</div>
+                                    <div class="card-text text-secondary">
                                         <div v-if="imgDescVm?.metadata && Object.keys(imgDescVm.metadata).length > 0"
-                                            class="card-text text-secondary">
+                                            class="card-text  m-2">
+                                            {{ imgDescVm?.size_uncompressed_mb }}Mb
+                                            <div class="vr"></div>
                                             {{
                                                 new Date(imgDescVm?.metadata["exif"]["0th"]["DateTime"]
                                                     .replace(/^(\d{4}):(\d{2}):(\d{2})/, '$1-$2-$3')
@@ -222,9 +228,8 @@ onMounted(() => {
                                                 imgDescVm?.metadata["exif"]["0th"]["Make"] || ''
                                             }}
 
-                                            <!-- {{ imgDesc?.metadata }} -->
+                                            <!-- {{ imgDescVm?.metadata }} -->
                                         </div>
-
                                     </div>
                                 </div>
                             </div>
