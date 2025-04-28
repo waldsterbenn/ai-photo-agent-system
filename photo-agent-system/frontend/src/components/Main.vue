@@ -1,6 +1,6 @@
 <script setup lang="ts">
-import { defineAsyncComponent } from 'vue';
 import axios from 'axios';
+import { defineAsyncComponent } from 'vue';
 // Import Bootstrap Modal from bootstrap's JS distribution
 import { backendUrl } from '@/config/backend_conf';
 import * as criteriaData from '@/config/criteria.json';
@@ -10,12 +10,13 @@ import { ImageDescriptionViewModel } from '@/data/ImageDescriptionViewModel';
 import { ImageTools } from '@/tools/ImageTools';
 import Modal from 'bootstrap/js/dist/modal';
 import { computed, onMounted, ref, toRaw, watch } from 'vue';
+import Toolbar from './Toolbar.vue';
+
 
 // Import DuplicateImages component asynchronously
 const DuplicateImages = defineAsyncComponent(() => import('./DuplicateImages.vue'));
 const searchForDuplicates = ref<boolean>(false);
 
-const statusUrl = computed(() => `${backendUrl}/status`);
 const processUrl = computed(() => `${backendUrl}/processtask`);
 const deleteUrl = computed(() => `${backendUrl}/delete-image-descriptions`);
 const compressImgUrl = computed(() => `${backendUrl}/compress-image`);
@@ -292,42 +293,9 @@ function setLoadingState(loading: boolean, selectedImages: ImageDescriptionViewM
 <template>
     <div class="container-fluid d-flex flex-column h-100 bg-secondary-subtle">
         <!-- Toolbar -->
-        <div class="toolbar d-flex p-2 bg-secondary-subtle sticky-top hstack gap-3">
-            <!-- Hidden File Input -->
-            <input type="file" accept="image/*" multiple ref="imageInput" style="display:none"
-                @change="handleImageUpload" />
-
-            <!-- Gear icon button to open analysis modal -->
-            <button @click="openAnalysisModal" class="btn btn-secondary-subtle p-2" title="Analysis Settings">
-                <i class="bi bi-gear"></i>
-            </button>
-
-            <!-- Button to trigger image picker -->
-            <button @click="triggerImagePicker" class="btn btn-secondary p-2 ms-auto" title="Upload a photo">
-                <i class="bi bi-image"></i> Select Photos
-            </button>
-
-            <input type="checkbox" class="btn-check" id="btn-check-duplicates" autocomplete="off"
-                v-model="searchForDuplicates" @click="findDuplicates" />
-            <label class="btn btn-secondary p-2" for="btn-check-duplicates">
-                Duplicates <i class="bi bi-copy"></i>
-            </label>
-
-            <button @click="" class="btn btn-secondary p-2 disabled" title="Sort">
-                <i class="bi bi-sort-alpha-down"></i> Sort
-            </button>
-
-            <div class="vr"></div>
-
-            <!-- Button to delete photos -->
-            <button @click="deleteSelected" class="btn btn-secondary p-2" title="Delete selected phots">
-                <i class="bi bi-trash"></i>
-            </button>
-
-            <!-- Send Message Button -->
-            <button @click="sendMessage" class="btn btn-primary p-2" :disabled="loading">Go</button>
-        </div>
-
+        <Toolbar @handleImageUpload="handleImageUpload" @openAnalysisModal="openAnalysisModal"
+            @triggerImagePicker="triggerImagePicker" @findDuplicates="findDuplicates" @deleteSelected="deleteSelected"
+            @sendMessage="sendMessage" />
 
         <div>
             <Suspense v-if="searchForDuplicates">
