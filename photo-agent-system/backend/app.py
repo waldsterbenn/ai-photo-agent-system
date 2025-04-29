@@ -59,7 +59,7 @@ def process_task():
         return jsonify({'taskId': taskId, 'status': 'success', 'result': response.json()}), 200
     except Exception as e:
         print(f"Error submitting task: {e}")
-        return jsonify({"error": "Failed to submit task"}), 500
+        return jsonify({"error": f"Failed to submit task {str(e)}"}), 500
 
 
 """ Endpoint to get list of existing ImageDescriptions """

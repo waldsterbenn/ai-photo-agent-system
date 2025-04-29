@@ -180,6 +180,7 @@ async function analyzePhotos() {
     } finally {
         appStateStore.loading = false;
     }
+    setDescriptionsLoadingState(false, filteredImages);
 }
 </script>
 
