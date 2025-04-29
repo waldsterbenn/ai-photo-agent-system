@@ -44,11 +44,12 @@ const promptText = computed({
                         <div class="col card p-2 m-2">
                             <h5>Card Columns</h5>
                             <div class="btn-group flex-wrap">
-                                <button type="button" v-for="n in [1, 2, 3, 4, 5]" :key="n" class="btn" :class="{
-                                    'btn-primary': appStateStore.analysisModal.columnsCount === n,
-                                    'btn-outline-primary': appStateStore.analysisModal.columnsCount !== n
-                                }" @click="appStateStore.analysisModal.columnsCount = n">
-                                    {{ n }}
+                                <button type="button" v-for="n in [undefined, 1, 2, 3, 4, 5]" :key="n" class="btn"
+                                    :class="{
+                                        'btn-primary': appStateStore.analysisModal.columnsCount === n,
+                                        'btn-outline-primary': appStateStore.analysisModal.columnsCount !== n
+                                    }" @click="appStateStore.analysisModal.columnsCount = n">
+                                    {{ n ?? "Auto" }}
                                 </button>
                             </div>
                         </div>

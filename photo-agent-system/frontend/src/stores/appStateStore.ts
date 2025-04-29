@@ -10,7 +10,7 @@ export const useAppStateStore = defineStore('appState', {
         analysisModal: {
             promptsOptions: promptsData.prompts,
             selectedPromptId: promptsData.prompts[0].id,
-            columnsCount: 3,
+            columnsCount: undefined as number | undefined,
             prompt: promptsData.prompts[0].prompt,
             criteria: criteriaData.criteria.map((crit: string) => ({
                 text: crit,

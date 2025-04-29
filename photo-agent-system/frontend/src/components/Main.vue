@@ -6,7 +6,7 @@ import { useAppStateStore } from '@/stores/appStateStore';
 import { useImageDescriptionsStore } from '@/stores/imageDescriptionsStore';
 import { useToolbarStore } from '@/stores/toolbarStore';
 import axios from 'axios';
-import { onMounted } from 'vue';
+import { computed, onMounted } from 'vue';
 import AnalysisModal from './AnalysisModal.vue';
 import AppStatusPanel from './AppStatusPanel.vue';
 import DuplicateImagesSuspense from './DuplicateImagesSuspense.vue';
@@ -18,6 +18,16 @@ const imageDescriptionsStore = useImageDescriptionsStore();
 const appStateStore = useAppStateStore();
 
 const duplicateTimeThresholdMs = 10 * 1000;
+
+// New computed property to determine the row class
+const columnsClass = computed(() => {
+    // if columnsCount is defined use that value
+    if (appStateStore.analysisModal.columnsCount) {
+        return `row row-cols-${appStateStore.analysisModal.columnsCount} g-2`;
+    }
+    // else, set responsive bootstrap classes:
+    return "row row-cols-1 row-cols-sm-1 row-cols-md-2 row-cols-lg-2 row-cols-xl-3 g-2";
+});
 
 async function makePlaceholderDescriptions() {
     console.log("Counting image descriptions...");
@@ -55,8 +65,8 @@ onMounted(() => {
 
         <div class="content flex-grow-1 p-2">
             <AppStatusPanel />
-            <div v-if="imageDescriptionsStore.imageDescriptions.length > 0"
-                :class="`row row-cols-${appStateStore.analysisModal.columnsCount} g-2`">
+
+            <div v-if="imageDescriptionsStore.imageDescriptions.length > 0" :class="columnsClass">
                 <ImageDescriptionCard v-for="imgDescVm in imageDescriptionsStore.imageDescriptions" :key="imgDescVm.id"
                     :imgDescVm="imgDescVm" />
             </div>
