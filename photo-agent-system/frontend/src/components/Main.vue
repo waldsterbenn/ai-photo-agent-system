@@ -19,13 +19,10 @@ const appStateStore = useAppStateStore();
 
 const duplicateTimeThresholdMs = 10 * 1000;
 
-// New computed property to determine the row class
 const columnsClass = computed(() => {
-    // if columnsCount is defined use that value
     if (appStateStore.analysisModal.columnsCount) {
         return `row row-cols-${appStateStore.analysisModal.columnsCount} g-2`;
     }
-    // else, set responsive bootstrap classes:
     return "row row-cols-1 row-cols-sm-1 row-cols-md-2 row-cols-lg-2 row-cols-xl-3 g-2";
 });
 
