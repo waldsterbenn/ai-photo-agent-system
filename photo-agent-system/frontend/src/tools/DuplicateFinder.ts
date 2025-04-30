@@ -1,5 +1,15 @@
+import { ImageDescriptionDto } from "@/data/ImageDescriptionDto";
 import { ImageDescriptionViewModel } from "@/data/ImageDescriptionViewModel";
 import { useAppStateStore } from '@/stores/appStateStore';
+
+export class DuplicationCluster {
+    time: undefined | number;
+    groupId: string = '';
+    groupHeader: string = '';
+    images: ImageDescriptionDto[] = [];
+    reason: string = '';
+    typeIcon:string = "clock"; 
+}
 
 export class DuplicateFinder {
     timeThresholdMs: number;
@@ -10,7 +20,7 @@ export class DuplicateFinder {
     }
 
     /// Method to find duplicates in list of ImageDescriptionViewModel. It finds and compare the object's metadata["exif"]["0th"]["DateTime"]
-    findDuplicates(images: ImageDescriptionViewModel[]): { time: number; images: ImageDescriptionViewModel[] }[] {
+    findDuplicates(images: ImageDescriptionViewModel[]): DuplicationCluster[] {
         // Each cluster holds a representative time and an array of images that are considered duplicates.
         const clusters: { time: number; images: ImageDescriptionViewModel[] }[] = [];
 
@@ -57,6 +67,13 @@ export class DuplicateFinder {
             }
         }
         
-        return clusters.filter(x=>x.images.length>1); // Return duplicates only if any cluster has more than one image.
+        return clusters
+            .filter(x => x.images.length > 1)
+            .map(x => {
+                const cluster = new DuplicationCluster();
+                cluster.time = x.time;
+                cluster.images = x.images;
+                return cluster;
+            });
     }
 }

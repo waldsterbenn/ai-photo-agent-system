@@ -62,6 +62,28 @@ def process_task():
         return jsonify({"error": f"Failed to submit task {str(e)}"}), 500
 
 
+@app.route('/duplicate-detection', methods=['POST'])
+def duplicate_detection():
+    jsonData = request.get_json()
+    taskId = jsonData.get('taskId')
+    image_descriptions = jsonData.get('imageDescriptions')
+
+    if not taskId:
+        return jsonify({'error': 'No task provided'}), 400
+
+    if not image_descriptions:
+        return jsonify({'error': 'No image_descriptions provided'}), 400
+
+    try:
+        response = requests.post(
+            f"{get_agent_manager_url()}/duplicate-detection", json=jsonData)
+        response.raise_for_status()
+        return jsonify({'taskId': taskId, 'status': 'success', 'result': response.json()}), 200
+    except Exception as e:
+        print(f"Error submitting task: {e}")
+        return jsonify({"error": f"Failed to submit task {str(e)}"}), 500
+
+
 """ Endpoint to get list of existing ImageDescriptions """
 
 

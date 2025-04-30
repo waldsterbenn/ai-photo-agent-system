@@ -1,6 +1,7 @@
 from agent_manager import AgentManager
 from flask import Flask, request, jsonify
 from datastructures.image_carrier import ImageCarrier
+from duplication_detection import DuplicationDetection
 
 app = Flask(__name__)
 
@@ -32,3 +33,12 @@ def submit_task():
     plan = manager.plan_task(taskPrompt, criteria, image_carriers)
     result = manager.execute_task()
     return jsonify(result)
+
+
+@app.route('/duplicate-detection', methods=['POST'])
+def dublicate_detection():
+    data = request.get_json()
+    detector = DuplicationDetection()
+    duplicates = detector.detect_duplicate_descriptions(
+        data['imageDescriptions'])
+    return jsonify(duplicates), 200

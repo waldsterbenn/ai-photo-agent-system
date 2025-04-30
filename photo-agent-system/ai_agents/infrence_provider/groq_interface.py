@@ -39,7 +39,7 @@ class GroqInterface(InferenceProvider):
         print(f"Initializing GroqInterface with model: {self.model}")
         self.client = Groq(api_key=self.api_key)
 
-    def infer(self, prompt: str, image: str = None, format: str = None, temperature: float = 1.0) -> str:
+    def infer(self, prompt: str, image: str = None, format: str = None, temperature: float = 1.0, modelOverride: str = None) -> str:
         content = []
         prettyFormat = json.dumps(format, indent=2)
         # Only add text content if prompt is provided.
@@ -69,7 +69,7 @@ class GroqInterface(InferenceProvider):
                 "content": content
             }],
             response_format={"type": "json_object"},
-            model=self.model,
+            model=modelOverride if modelOverride is not None else self.model,
             temperature=temperature,
             # max_completion_tokens=1024,
             # top_p=1,

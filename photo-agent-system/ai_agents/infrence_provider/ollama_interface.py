@@ -36,7 +36,7 @@ class OllamaInterface(InferenceProvider):
             if e.status_code == 404:
                 self.client.pull(self.model)
 
-    def infer(self, prompt: str, image: str = None, format: str = None, temperature: float = 0) -> str:
+    def infer(self, prompt: str, image: str = None, format: str = None, temperature: float = 0, modelOverride: str = None) -> str:
 
         msg = {
             'role': 'user',

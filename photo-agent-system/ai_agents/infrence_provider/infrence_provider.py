@@ -12,7 +12,7 @@ class InferenceProvider(ABC):
         pass
 
     @abstractmethod
-    def infer(self, prompt: str, image: str = None, format: str = None, temperature: float = 1.0) -> str:
+    def infer(self, prompt: str, image: str = None, format: str = None, temperature: float = 1.0, modelOverride: str = None) -> str:
         """
         Perform inference based on the given prompt.
         """
