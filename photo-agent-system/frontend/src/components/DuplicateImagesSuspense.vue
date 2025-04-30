@@ -1,17 +1,14 @@
 <script setup lang="ts">
-import { defineAsyncComponent, defineProps } from 'vue';
+import { defineAsyncComponent } from 'vue';
 const DuplicateImages = defineAsyncComponent(() => import('./DuplicateImages.vue'));
 
-const props = defineProps<{
-    duplicateTimeThresholdMs: number;
-}>();
 </script>
 
 <template>
     <Suspense>
         <template #default>
             <div class="content flex-grow-1 p-2 bg-secondary">
-                <DuplicateImages :duplicateTimeThresholdMs="props.duplicateTimeThresholdMs" />
+                <DuplicateImages />
             </div>
         </template>
         <template #fallback>

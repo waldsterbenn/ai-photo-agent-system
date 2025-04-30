@@ -1,10 +1,12 @@
 import { ImageDescriptionViewModel } from "@/data/ImageDescriptionViewModel";
+import { useAppStateStore } from '@/stores/appStateStore';
 
 export class DuplicateFinder {
     timeThresholdMs: number;
-    constructor(timeThresholdMs?: number) {
-        this.timeThresholdMs = timeThresholdMs ?? 5000; // Default threshold of 5 seconds
-        
+    constructor() {
+        const appStateStore = useAppStateStore();
+        this.timeThresholdMs = (appStateStore.analysisModal.duplicateTimeThresholdSec) ?? 5; // Default threshold of 5 seconds
+        this.timeThresholdMs *= 1000; // Convert seconds to milliseconds
     }
 
     /// Method to find duplicates in list of ImageDescriptionViewModel. It finds and compare the object's metadata["exif"]["0th"]["DateTime"]

@@ -4,12 +4,10 @@
         <input type="file" accept="image/*" multiple ref="imageInput" style="display:none"
             @change="handleImageUpload" />
 
-        <!-- Gear icon button to open analysis modal -->
         <button @click="toolbarStore.openAnalysisModal" class="btn btn-secondary-subtle p-2" title="Analysis Settings">
             <i class="bi bi-gear"></i>
         </button>
 
-        <!-- Button to trigger image picker -->
         <button @click="toolbarStore.triggerImagePicker(imageInput)" class="btn btn-secondary p-2 ms-auto"
             :disabled="!appStateStore.allSystemsNominal" title="Upload a photo">
             <i class="bi bi-image"></i> Select Photos
@@ -86,11 +84,10 @@ async function onDeleteSelected() {
     try {
         await toolbarStore.deleteSelected(selectedImages);
     } catch (error: any) {
-        console.error("Error deleting images:", error);
-        appStateStore.error = error.message || JSON.stringify(error);
-    } finally {
-        appStateStore.loading = false;
+        handleError("Error deleting images", error);
     }
+    appStateStore.loading = false;
+
 }
 
 async function handleImageUpload(event: Event) {
@@ -99,7 +96,7 @@ async function handleImageUpload(event: Event) {
 
     appStateStore.error = undefined;
 
-    // Add dummy cards immediately
+    // Add dummy cards immediately, because processing may take a while
     for (const file of Array.from(target.files)) {
         const dummyCard = {
             filename: file.name,
@@ -136,9 +133,8 @@ async function handleImageUpload(event: Event) {
                 size_compressed_mb: compressionResult.compressedSize,
                 size_uncompressed_mb: compressionResult.originalSize
             } as ImageDescriptionViewModel);
-        } catch (err) {
-            console.error("Image upload error:", err);
-            appStateStore.error = (err as Error).message || JSON.stringify(err);
+        } catch (error) {
+            handleError("Image upload error", error);
         }
     }
 
@@ -176,11 +172,15 @@ async function analyzePhotos() {
             appStateStore.error = data.error;
         }
     } catch (err) {
-        appStateStore.error = (err as Error).message || JSON.stringify(err);
-    } finally {
-        appStateStore.loading = false;
+        handleError("Error analyzing images", err);
     }
     setDescriptionsLoadingState(false, filteredImages);
+    appStateStore.loading = false;
+}
+
+function handleError(msg: string, error: any) {
+    console.error(msg, error);
+    appStateStore.error = error.message || JSON.stringify(error);
 }
 </script>
 

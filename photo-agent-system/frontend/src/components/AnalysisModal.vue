@@ -33,13 +33,19 @@ const promptText = computed({
                 <div class="modal-body">
                     <div class="row mb-2">
                         <div class="col card p-2 m-2">
-                            <h5>Profile</h5>
+                            <h5>Pompt profile</h5>
                             <select class="form-select" v-model.number="appStateStore.analysisModal.selectedPromptId">
                                 <option v-for="p in appStateStore.analysisModal.promptsOptions" :key="p.id"
                                     :value="p.id">
                                     {{ p.name }}
                                 </option>
                             </select>
+                        </div>
+                        <div class="col card p-2 m-2">
+                            <h5>Duplicate time</h5>
+                            <input type="number" class="form-control"
+                                v-model.number="appStateStore.analysisModal.duplicateTimeThresholdSec" min="0"
+                                max="1000" step="1">
                         </div>
                         <div class="col card p-2 m-2">
                             <h5>Card Columns</h5>

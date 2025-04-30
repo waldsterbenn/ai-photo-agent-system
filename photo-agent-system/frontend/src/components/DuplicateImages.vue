@@ -6,7 +6,7 @@ import { getImageUrl } from '@/utils/getImageUrl';
 import { computed } from 'vue';
 
 interface Props {
-    duplicateTimeThresholdMs?: number;
+
 }
 const props = defineProps<Props>();
 
@@ -15,7 +15,7 @@ const imageDescriptionsStore = useImageDescriptionsStore();
 
 //await new Promise(resolve => setTimeout(resolve, 5000)); // Simulate a delay for the sake of example
 const duplicateClusters = computed(() => {
-    return new DuplicateFinder(props.duplicateTimeThresholdMs).findDuplicates(imageDescriptionsStore.imageDescriptions);
+    return new DuplicateFinder().findDuplicates(imageDescriptionsStore.imageDescriptions);
 });
 </script>
 

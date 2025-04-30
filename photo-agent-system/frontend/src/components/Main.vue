@@ -17,12 +17,11 @@ const toolbarStore = useToolbarStore();
 const imageDescriptionsStore = useImageDescriptionsStore();
 const appStateStore = useAppStateStore();
 
-const duplicateTimeThresholdMs = 10 * 1000;
-
 const columnsClass = computed(() => {
     if (appStateStore.analysisModal.columnsCount) {
         return `row row-cols-${appStateStore.analysisModal.columnsCount} g-2`;
     }
+    //Adaptive columns for different screen sizes, in auto mode
     return "row row-cols-1 row-cols-sm-1 row-cols-md-2 row-cols-lg-2 row-cols-xl-3 g-2";
 });
 
@@ -57,8 +56,7 @@ onMounted(() => {
     <div class="container-fluid d-flex flex-column h-100 bg-secondary-subtle">
         <Toolbar />
 
-        <DuplicateImagesSuspense v-if="toolbarStore.searchForDuplicates"
-            :duplicateTimeThresholdMs="duplicateTimeThresholdMs" />
+        <DuplicateImagesSuspense v-if="toolbarStore.searchForDuplicates" />
 
         <div class="content flex-grow-1 p-2">
             <AppStatusPanel />

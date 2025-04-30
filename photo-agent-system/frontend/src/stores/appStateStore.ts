@@ -11,6 +11,7 @@ export const useAppStateStore = defineStore('appState', {
             promptsOptions: promptsData.prompts,
             selectedPromptId: promptsData.prompts[0].id,
             columnsCount: undefined as number | undefined,
+            duplicateTimeThresholdSec: 10 as number,
             prompt: promptsData.prompts[0].prompt,
             criteria: criteriaData.criteria.map((crit: string) => ({
                 text: crit,
